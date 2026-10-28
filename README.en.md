@@ -18,7 +18,8 @@
 
 A small, read-only Linux PDF viewer built with **C++20, Qt 6 Widgets and
 PDF4QT**. It displays a single PDF page at a time, composites static XFA forms
-and annotations through PDF4QT, and prints through CUPS.
+and annotations through PDF4QT, and prints through CUPS. The application
+interface is fully Russian.
 
 The project deliberately uses PDF4QT Core directly instead of the heavier
 PDF4QT viewer application/library. The rendering paths for the screen and for
@@ -35,6 +36,11 @@ printing are therefore explicit and easy to audit.
 - Password-protected documents prompt for a password.
 - Zoom in/out, actual size, fit width, fit page, and Ctrl+wheel zoom.
 - Page navigation with toolbar, menu, keyboard, and drag-and-drop.
+- Rotate the current page clockwise or counterclockwise, with a reset action.
+  Rotation affects the view only; the original PDF is never modified.
+- Full-screen mode (`F11`, exit with `Esc`).
+- Document properties with path, file size, page count, page size, XFA, and
+  encryption status.
 - CUPS printing with two modes:
   1. **Direct PDF** – streams the original PDF bytes to CUPS. This is the
      lossless, vector-preserving path. It always prints all pages.
@@ -53,6 +59,26 @@ printing are therefore explicit and easy to audit.
 | Main window | Static XFA |
 | --- | --- |
 | ![pdfly main window](docs/screenshots/pdfly-main.png) | ![pdfly with a static XFA form](docs/screenshots/pdfly-xfa.png) |
+
+## Keyboard shortcuts
+
+| Action | Shortcut |
+| --- | --- |
+| Open PDF | `Ctrl+O` |
+| Print | `Ctrl+P` |
+| Document properties | `Ctrl+I` |
+| Previous / next page | `Page Up` / `Page Down` |
+| First / last page | `Ctrl+Home` / `Ctrl+End` |
+| Zoom in / out | `Ctrl++` / `Ctrl+-` |
+| Actual size | `Ctrl+0` |
+| Fit width / fit page | `Ctrl+8` / `Ctrl+9` |
+| Rotate clockwise | `Ctrl+R` |
+| Rotate counterclockwise | `Ctrl+Shift+R` |
+| Reset rotation | `Ctrl+Alt+R` |
+| Full screen | `F11` |
+| Exit full screen | `Esc` |
+
+Ctrl+wheel also zooms the page.
 
 ## Important limitation: XFA and “lossless”
 
@@ -344,7 +370,9 @@ Package layout:
 The executable uses the RPATH `$ORIGIN/../lib64/pdfly`, so it finds the
 bundled PDF4QT library without changing the system library path or conflicting
 with a separately installed PDF4QT. Qt 6, CUPS, OpenSSL, FreeType, OpenJPEG,
-JPEG, PNG, Little CMS 2, TBB, and zlib remain normal RPM dependencies.
+JPEG, PNG, Little CMS 2, TBB, and zlib remain normal RPM dependencies. The
+package also requires `qt6-qttranslations` so standard Qt dialogs and buttons
+are shown in Russian.
 
 Inspect the package with:
 
@@ -412,7 +440,7 @@ The application uses `libcups` directly and talks to the local CUPS server via
    ```bash
    lpstat -p -d
    ```
-2. Open a document, choose **File → Print**.
+2. Open a document and choose **Файл → Печать** (the UI is Russian).
 3. If a static XFA form is detected, direct PDF mode is disabled and flatten
    mode is selected automatically. Choose the DPI, page range, copies, and
    whether to scale to the printable area.
@@ -449,8 +477,8 @@ document.
 CMakeLists.txt
 src/
   main.cpp                 application entry point
-  mainwindow.*             menus, toolbar, open/print flows
-  pageview.*               scrollable page display and zoom/fit
+  mainwindow.*             menus, toolbar, properties, full screen, open/print flows
+  pageview.*               scrollable page display, zoom/fit, and rotation
   pdfdocumentmodel.*       PDF4QT document, caches, XFA pagination, rendering
   cupsprint.*              CUPS destination enumeration and streaming jobs
   printdialog.*            XFA-aware print options

@@ -24,27 +24,27 @@ PrintDialog::PrintDialog(PdfDocumentModel* model, QWidget* parent) :
     QDialog(parent),
     m_model(model)
 {
-    setWindowTitle(tr("Print"));
+    setWindowTitle(tr("Печать"));
     setModal(true);
 
     auto* printerLayout = new QHBoxLayout;
     m_printerCombo = new QComboBox(this);
     m_printerCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    m_refreshButton = new QPushButton(tr("Refresh"), this);
+    m_refreshButton = new QPushButton(tr("Обновить"), this);
     printerLayout->addWidget(m_printerCombo, 1);
     printerLayout->addWidget(m_refreshButton);
 
     auto* printerForm = new QFormLayout;
-    printerForm->addRow(tr("Printer:"), printerLayout);
+    printerForm->addRow(tr("Принтер:"), printerLayout);
 
     m_printerMessage = new QLabel(this);
     m_printerMessage->setWordWrap(true);
     m_printerMessage->setStyleSheet(QStringLiteral("color: #b00020;"));
 
     // ---- Output mode -----------------------------------------------------
-    m_modeGroup = new QGroupBox(tr("Output"), this);
-    m_directRadio = new QRadioButton(tr("Original PDF (vector, all pages)"), m_modeGroup);
-    m_flattenRadio = new QRadioButton(tr("Flatten pages in the viewer"), m_modeGroup);
+    m_modeGroup = new QGroupBox(tr("Способ вывода"), this);
+    m_directRadio = new QRadioButton(tr("Исходный PDF (векторный, все страницы)"), m_modeGroup);
+    m_flattenRadio = new QRadioButton(tr("Растровые страницы"), m_modeGroup);
     m_modeHint = new QLabel(m_modeGroup);
     m_modeHint->setWordWrap(true);
     m_modeHint->setTextFormat(Qt::PlainText);
@@ -58,21 +58,22 @@ PrintDialog::PrintDialog(PdfDocumentModel* model, QWidget* parent) :
 
     if (hasXfa)
     {
-        m_modeHint->setText(tr("Static XFA form detected. This viewer supports read-only XFA "
-                               "rendering only, so the form is flattened before printing. "
-                               "This guarantees that all XFA fields and edges are included."));
+        m_modeHint->setText(tr("Обнаружена статическая XFA-форма. Просмотрщик поддерживает "
+                               "XFA только в режиме чтения, поэтому перед печатью форма будет "
+                               "растрирована. Это гарантирует вывод всех полей XFA и их границ."));
     }
     else if (isEncrypted)
     {
-        m_modeHint->setText(tr("This PDF is encrypted. Direct mode would send the encrypted "
-                               "original to CUPS, which cannot supply the password, so the "
-                               "document is flattened before printing."));
+        m_modeHint->setText(tr("PDF зашифрован. В прямом режиме зашифрованный файл ушёл бы "
+                               "в CUPS, который не может запросить пароль, поэтому документ "
+                               "будет растрирован перед печатью."));
     }
     else
     {
-        m_modeHint->setText(tr("Original PDF mode sends the unchanged PDF to CUPS and preserves "
-                               "vector text and graphics. Use flatten mode if form fields, "
-                               "annotations, or unusual page boxes do not print correctly."));
+        m_modeHint->setText(tr("Прямой режим отправляет исходный PDF в CUPS без изменений и "
+                               "сохраняет векторный текст и графику. Если поля форм, аннотации "
+                               "или необычные границы страницы печатаются неправильно, выберите "
+                               "растровый режим."));
     }
 
     auto* modeLayout = new QVBoxLayout(m_modeGroup);
@@ -81,9 +82,9 @@ PrintDialog::PrintDialog(PdfDocumentModel* model, QWidget* parent) :
     modeLayout->addWidget(m_modeHint);
 
     // ---- Pages -----------------------------------------------------------
-    m_rangeGroup = new QGroupBox(tr("Pages"), this);
-    m_allPagesRadio = new QRadioButton(tr("All pages"), m_rangeGroup);
-    m_rangeRadio = new QRadioButton(tr("Page range:"), m_rangeGroup);
+    m_rangeGroup = new QGroupBox(tr("Страницы"), this);
+    m_allPagesRadio = new QRadioButton(tr("Все страницы"), m_rangeGroup);
+    m_rangeRadio = new QRadioButton(tr("Диапазон страниц:"), m_rangeGroup);
     m_allPagesRadio->setChecked(true);
 
     m_firstPageSpin = new QSpinBox(m_rangeGroup);
@@ -97,7 +98,7 @@ PrintDialog::PrintDialog(PdfDocumentModel* model, QWidget* parent) :
     auto* rangeRow = new QHBoxLayout;
     rangeRow->addWidget(m_rangeRadio);
     rangeRow->addWidget(m_firstPageSpin);
-    rangeRow->addWidget(new QLabel(tr("to"), m_rangeGroup));
+    rangeRow->addWidget(new QLabel(tr("по"), m_rangeGroup));
     rangeRow->addWidget(m_lastPageSpin);
     rangeRow->addStretch(1);
 
@@ -117,28 +118,29 @@ PrintDialog::PrintDialog(PdfDocumentModel* model, QWidget* parent) :
 
     m_dpiCombo = new QComboBox(this);
     m_dpiCombo->addItem(tr("150 DPI"), 150);
-    m_dpiCombo->addItem(tr("300 DPI (recommended)"), 300);
-    m_dpiCombo->addItem(tr("600 DPI (large files)"), 600);
+    m_dpiCombo->addItem(tr("300 DPI (рекомендуется)"), 300);
+    m_dpiCombo->addItem(tr("600 DPI (большие файлы)"), 600);
     m_dpiCombo->setCurrentIndex(1);
 
-    m_fitCheck = new QCheckBox(tr("Scale to printable area (prevents clipping)"), this);
+    m_fitCheck = new QCheckBox(tr("Вписать в область печати (без обрезки)"), this);
     m_fitCheck->setChecked(true);
-    m_fitCheck->setToolTip(tr("Adds print-scaling=fit to the CUPS job. The whole page, including "
-                              "fields close to the paper edge, is fitted into the printable area "
-                              "instead of being cropped."));
+    m_fitCheck->setToolTip(tr("Добавляет в задание CUPS параметр print-scaling=fit. "
+                              "Страница целиком, включая поля у края бумаги, вписывается "
+                              "в область печати вместо обрезки."));
 
     m_outputHint = new QLabel(this);
     m_outputHint->setWordWrap(true);
     m_outputHint->setTextFormat(Qt::PlainText);
 
     auto* optionsForm = new QFormLayout;
-    optionsForm->addRow(tr("Copies:"), m_copiesSpin);
-    optionsForm->addRow(tr("Raster resolution:"), m_dpiCombo);
+    optionsForm->addRow(tr("Копии:"), m_copiesSpin);
+    optionsForm->addRow(tr("Разрешение растра:"), m_dpiCombo);
     optionsForm->addRow(QString(), m_fitCheck);
     optionsForm->addRow(QString(), m_outputHint);
 
     m_buttonBox = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
-    m_printButton = m_buttonBox->addButton(tr("Print"), QDialogButtonBox::AcceptRole);
+    m_buttonBox->button(QDialogButtonBox::Cancel)->setText(tr("Отмена"));
+    m_printButton = m_buttonBox->addButton(tr("Печать"), QDialogButtonBox::AcceptRole);
     m_printButton->setDefault(true);
 
     auto* mainLayout = new QVBoxLayout(this);
@@ -196,7 +198,7 @@ void PrintDialog::reloadPrinters()
         QString label = printer.name;
         if (printer.isDefault)
         {
-            label += tr(" (default)");
+            label += tr(" (по умолчанию)");
         }
         m_printerCombo->addItem(label, printer.name);
         if (!printer.info.isEmpty())
@@ -207,7 +209,7 @@ void PrintDialog::reloadPrinters()
 
     if (printerList.isEmpty())
     {
-        m_printerCombo->addItem(tr("No printers available"));
+        m_printerCombo->addItem(tr("Принтеры не найдены"));
         m_printerCombo->setEnabled(false);
     }
     else
@@ -243,13 +245,14 @@ void PrintDialog::updateModeUi()
 
     if (flatten)
     {
-        m_rangeHint->setText(tr("Page selection applies to flattened output. Selected pages are "
-                                "rendered at the chosen resolution and sent as one CUPS job."));
+        m_rangeHint->setText(tr("Диапазон действует для растрового вывода. Выбранные страницы "
+                                "будут отрисованы с указанным разрешением и отправлены одним "
+                                "заданием CUPS."));
     }
     else
     {
-        m_rangeHint->setText(tr("Original PDF mode always sends all pages. Switch to flatten mode "
-                                "to print a page range."));
+        m_rangeHint->setText(tr("В прямом режиме всегда отправляются все страницы. Чтобы "
+                                "напечатать диапазон, выберите растровый режим."));
     }
 }
 
@@ -291,7 +294,8 @@ void PrintDialog::updateOutputHint()
         largestPagePixels = qMax(largestPagePixels, width * height);
     }
 
-    m_outputHint->setText(tr("%1 page(s) will be rasterized at %2 DPI. Largest page image: %3 MP.")
+    m_outputHint->setText(tr("Будет растрировано страниц: %1, разрешение: %2 DPI. "
+                             "Самое большое изображение: %3 Мп.")
                               .arg(pages.size())
                               .arg(dpi)
                               .arg(QString::number(largestPagePixels / 1'000'000.0, 'f', 1)));
@@ -345,7 +349,7 @@ PrintSettings PrintDialog::settings() const
     }
     if (printSettings.documentTitle.isEmpty())
     {
-        printSettings.documentTitle = tr("PDF document");
+        printSettings.documentTitle = tr("PDF-документ");
     }
 
     if (printSettings.flatten)
@@ -360,15 +364,16 @@ void PrintDialog::accept()
 {
     if (!m_model || !m_model->isOpen())
     {
-        QMessageBox::warning(this, tr("Print"), tr("No PDF document is open."));
+        QMessageBox::warning(this, tr("Печать"), tr("PDF-документ не открыт."));
         return;
     }
 
     if (m_printerCombo->currentData().toString().isEmpty())
     {
-        QMessageBox::warning(this, tr("Print"),
-                             tr("No CUPS printer is available. Start CUPS, configure a printer, "
-                                "and make sure the current user can access it."));
+        QMessageBox::warning(this, tr("Печать"),
+                             tr("Нет доступного принтера CUPS. Запустите CUPS, настройте "
+                                "принтер и убедитесь, что текущий пользователь имеет к нему "
+                                "доступ."));
         return;
     }
 
@@ -377,7 +382,7 @@ void PrintDialog::accept()
         const QVector<int> pages = selectedPageIndices();
         if (pages.isEmpty())
         {
-            QMessageBox::warning(this, tr("Print"), tr("No pages are selected."));
+            QMessageBox::warning(this, tr("Печать"), tr("Страницы не выбраны."));
             return;
         }
 
@@ -389,13 +394,14 @@ void PrintDialog::accept()
             const qint64 height = qRound(pageSizeMM.height() / 25.4 * dpi);
             if (width * height > MaximumFlattenPixels)
             {
-                QMessageBox::warning(this, tr("Print"),
-                                     tr("Page %1 would require a %2 x %3 pixel image at %4 DPI, "
-                                        "which exceeds the safe memory limit. Choose a lower DPI.")
+                QMessageBox::warning(this, tr("Печать"),
+                                     tr("Для страницы %1 при разрешении %2 DPI потребуется "
+                                        "изображение %3 × %4 пикселей, что превышает безопасный "
+                                        "лимит памяти. Выберите меньшее разрешение.")
                                          .arg(pageIndex + 1)
+                                         .arg(dpi)
                                          .arg(width)
-                                         .arg(height)
-                                         .arg(dpi));
+                                         .arg(height));
                 return;
             }
         }

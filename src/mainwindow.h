@@ -8,6 +8,7 @@ class PageView;
 class QAction;
 class QDragEnterEvent;
 class QDropEvent;
+class QEvent;
 class QLabel;
 class QSpinBox;
 
@@ -21,12 +22,14 @@ public:
     bool openFile(const QString& filePath);
 
 protected:
+    void changeEvent(QEvent* event) override;
     void dragEnterEvent(QDragEnterEvent* event) override;
     void dropEvent(QDropEvent* event) override;
 
 private slots:
     void chooseFile();
     void printDocument();
+    void showDocumentProperties();
     void goToFirstPage();
     void goToPreviousPage();
     void goToNextPage();
@@ -34,6 +37,7 @@ private slots:
     void updateDocumentUi();
     void updatePageUi(int pageIndex);
     void updateZoomUi(qreal zoom);
+    void updateRotationUi(int rotation);
     void showRenderFailure(const QString& message);
 
 private:
@@ -46,6 +50,7 @@ private:
 
     QAction* m_openAction = nullptr;
     QAction* m_printAction = nullptr;
+    QAction* m_documentInfoAction = nullptr;
     QAction* m_quitAction = nullptr;
     QAction* m_firstPageAction = nullptr;
     QAction* m_previousPageAction = nullptr;
@@ -56,6 +61,11 @@ private:
     QAction* m_actualSizeAction = nullptr;
     QAction* m_fitWidthAction = nullptr;
     QAction* m_fitPageAction = nullptr;
+    QAction* m_rotateLeftAction = nullptr;
+    QAction* m_rotateRightAction = nullptr;
+    QAction* m_resetRotationAction = nullptr;
+    QAction* m_fullScreenAction = nullptr;
+    QAction* m_exitFullScreenAction = nullptr;
 
     QSpinBox* m_pageSpinBox = nullptr;
     QLabel* m_pageCountLabel = nullptr;

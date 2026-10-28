@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#include <QHash>
 #include <QScrollArea>
 #include <QTimer>
 
@@ -30,6 +31,9 @@ public:
     int currentPage() const { return m_pageIndex; }
     qreal zoomFactor() const { return m_zoom; }
 
+    /// Clockwise view rotation of the current page: 0, 90, 180 or 270 degrees.
+    int rotation() const;
+
 public slots:
     void setPage(int pageIndex);
     void setZoomFactor(qreal zoom);
@@ -37,11 +41,15 @@ public slots:
     void zoomOut();
     void fitWidth();
     void fitPage();
+    void rotateClockwise();
+    void rotateCounterClockwise();
+    void resetRotation();
     void refresh();
 
 signals:
     void pageChanged(int pageIndex);
     void zoomChanged(qreal zoom);
+    void rotationChanged(int degrees);
     void renderFailed(const QString& message);
 
 protected:
@@ -54,10 +62,12 @@ private slots:
 private:
     void updateFitZoom();
     void scheduleFitUpdate();
+    void setCurrentPageRotation(int degrees);
 
     PdfDocumentModel* m_model = nullptr;
     PageCanvas* m_canvas = nullptr;
     QTimer m_fitTimer;
+    QHash<int, int> m_pageRotations;
     int m_pageIndex = 0;
     qreal m_zoom = 1.0;
     FitMode m_fitMode = FitMode::Page;

@@ -53,7 +53,7 @@ CupsPrintJob::Options jobOptions(const PdfDocumentModel& model, const PrintSetti
     }
     if (options.title.isEmpty())
     {
-        options.title = tr("PDF document");
+        options.title = tr("PDF-документ");
     }
     options.copies = settings.copies;
     options.fitToPrintableArea = settings.fitToPrintableArea;
@@ -73,7 +73,7 @@ PrintRunResult cancelled(QString* errorMessage)
 {
     if (errorMessage)
     {
-        *errorMessage = tr("Printing was cancelled.");
+        *errorMessage = tr("Печать отменена.");
     }
     return PrintRunResult::Cancelled;
 }
@@ -91,11 +91,11 @@ PrintRunResult runPrintJob(PdfDocumentModel& model,
 
     if (!model.isOpen())
     {
-        return failure(errorMessage, tr("No PDF document is open."));
+        return failure(errorMessage, tr("PDF-документ не открыт."));
     }
     if (settings.printer.trimmed().isEmpty())
     {
-        return failure(errorMessage, tr("No printer was selected."));
+        return failure(errorMessage, tr("Принтер не выбран."));
     }
 
     if (settings.flatten)
@@ -103,7 +103,7 @@ PrintRunResult runPrintJob(PdfDocumentModel& model,
         const QVector<int> pages = normalizedPages(model, settings);
         if (pages.isEmpty())
         {
-            return failure(errorMessage, tr("No valid pages were selected for printing."));
+            return failure(errorMessage, tr("Не выбрано ни одной допустимой страницы для печати."));
         }
 
         const int dpi = qBound(72, settings.dpi, 1200);
@@ -116,15 +116,15 @@ PrintRunResult runPrintJob(PdfDocumentModel& model,
         }
 
         QProgressDialog progress(parent);
-        progress.setWindowTitle(tr("Printing"));
+        progress.setWindowTitle(tr("Печать"));
         progress.setWindowModality(Qt::WindowModal);
         progress.setMinimumDuration(0);
         progress.setAutoClose(false);
         progress.setAutoReset(false);
-        progress.setCancelButtonText(tr("Cancel"));
+        progress.setCancelButtonText(tr("Отмена"));
         progress.setRange(0, pages.size());
         progress.setValue(0);
-        progress.setLabelText(tr("Rendering page 1 of %1...").arg(pages.size()));
+        progress.setLabelText(tr("Подготовка страницы 1 из %1…").arg(pages.size()));
         progress.show();
         QCoreApplication::processEvents();
 
@@ -139,7 +139,7 @@ PrintRunResult runPrintJob(PdfDocumentModel& model,
             }
 
             const int pageIndex = pages.at(i);
-            progress.setLabelText(tr("Rendering page %1 of %2 (document page %3)...")
+            progress.setLabelText(tr("Отрисовка страницы %1 из %2 (страница документа %3)…")
                                       .arg(i + 1)
                                       .arg(pages.size())
                                       .arg(pageIndex + 1));
@@ -153,19 +153,19 @@ PrintRunResult runPrintJob(PdfDocumentModel& model,
                 progress.close();
                 if (pageError.isEmpty())
                 {
-                    pageError = tr("Page rendering failed.");
+                    pageError = tr("Не удалось отобразить страницу.");
                 }
                 if (!renderMessages.isEmpty())
                 {
                     pageError += QLatin1Char('\n') + renderMessages.mid(0, 3).join(QLatin1Char('\n'));
                 }
                 return failure(errorMessage,
-                               tr("Page %1 could not be prepared: %2").arg(pageIndex + 1).arg(pageError));
+                               tr("Не удалось подготовить страницу %1: %2").arg(pageIndex + 1).arg(pageError));
             }
             renderMessages.clear();
 
             const bool lastDocument = i + 1 == pages.size();
-            if (!job.beginDocument(tr("Page %1").arg(pageIndex + 1), lastDocument, &cupsError)
+            if (!job.beginDocument(tr("Страница %1").arg(pageIndex + 1), lastDocument, &cupsError)
                 || !job.write(pagePdf, &cupsError)
                 || !job.finishDocument(&cupsError))
             {
@@ -187,12 +187,12 @@ PrintRunResult runPrintJob(PdfDocumentModel& model,
     if (!file.open(QIODevice::ReadOnly))
     {
         return failure(errorMessage,
-                       tr("The original PDF file could not be opened for printing: %1")
+                       tr("Не удалось открыть исходный PDF для печати: %1")
                            .arg(file.errorString()));
     }
     if (file.size() <= 0)
     {
-        return failure(errorMessage, tr("The original PDF file is empty."));
+        return failure(errorMessage, tr("Исходный PDF-файл пуст."));
     }
 
     CupsPrintJob job;
@@ -203,15 +203,15 @@ PrintRunResult runPrintJob(PdfDocumentModel& model,
     }
 
     QProgressDialog progress(parent);
-    progress.setWindowTitle(tr("Printing"));
+    progress.setWindowTitle(tr("Печать"));
     progress.setWindowModality(Qt::WindowModal);
     progress.setMinimumDuration(0);
     progress.setAutoClose(false);
     progress.setAutoReset(false);
-    progress.setCancelButtonText(tr("Cancel"));
+    progress.setCancelButtonText(tr("Отмена"));
     progress.setRange(0, 100);
     progress.setValue(0);
-    progress.setLabelText(tr("Sending the original PDF to CUPS..."));
+    progress.setLabelText(tr("Отправка исходного PDF в CUPS…"));
     progress.show();
     QCoreApplication::processEvents();
 
@@ -243,7 +243,7 @@ PrintRunResult runPrintJob(PdfDocumentModel& model,
                 job.cancel();
                 progress.close();
                 return failure(errorMessage,
-                               tr("Reading the PDF file failed: %1").arg(file.errorString()));
+                               tr("Не удалось прочитать PDF-файл: %1").arg(file.errorString()));
             }
             break;
         }

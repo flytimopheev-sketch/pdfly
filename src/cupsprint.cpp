@@ -9,31 +9,31 @@
 
 namespace
 {
+QString tr(const char* text)
+{
+    return QCoreApplication::translate("CupsPrint", text);
+}
+
 QString lastCupsError(const QString& fallback)
 {
     const char* cupsError = cupsLastErrorString();
     QString message = cupsError ? QString::fromLocal8Bit(cupsError) : QString();
     if (message.trimmed().isEmpty())
     {
-        message = fallback;
+        return fallback;
     }
-    return message;
+    return tr("Ошибка CUPS: %1").arg(message);
 }
 
 QString finishError(ipp_status_t status, const QString& fallback)
 {
     const char* ippError = ippErrorString(status);
-    QString message = ippError ? QString::fromLocal8Bit(ippError) : fallback;
+    QString message = ippError ? QString::fromLocal8Bit(ippError) : QString();
     if (message.trimmed().isEmpty())
     {
-        message = fallback;
+        return fallback;
     }
-    return message;
-}
-
-QString tr(const char* text)
-{
-    return QCoreApplication::translate("CupsPrint", text);
+    return tr("Ошибка CUPS: %1").arg(message);
 }
 }   // namespace
 
@@ -89,8 +89,8 @@ QVector<CupsPrinter> CupsBackend::printers(QString* errorMessage)
     if (result.isEmpty() && errorMessage)
     {
         *errorMessage = lastCupsError(
-            tr("No CUPS printers are configured. Start CUPS, add a printer, and make sure "
-               "the current user can access it."));
+            tr("Очереди CUPS не настроены. Запустите CUPS, добавьте принтер и убедитесь, "
+               "что текущий пользователь имеет к нему доступ."));
     }
 
     return result;
@@ -114,7 +114,7 @@ bool CupsPrintJob::begin(const Options& options, QString* errorMessage)
     {
         if (errorMessage)
         {
-            *errorMessage = tr("No printer was selected.");
+            *errorMessage = tr("Принтер не выбран.");
         }
         return false;
     }
@@ -148,7 +148,7 @@ bool CupsPrintJob::begin(const Options& options, QString* errorMessage)
         m_jobId = 0;
         if (errorMessage)
         {
-            *errorMessage = lastCupsError(tr("The CUPS job could not be created."));
+            *errorMessage = lastCupsError(tr("Не удалось создать задание CUPS."));
         }
         return false;
     }
@@ -171,7 +171,7 @@ bool CupsPrintJob::beginDocument(const QString& documentName, bool lastDocument,
     {
         if (errorMessage)
         {
-            *errorMessage = tr("The CUPS job is not active.");
+            *errorMessage = tr("Задание CUPS неактивно.");
         }
         return false;
     }
@@ -180,7 +180,7 @@ bool CupsPrintJob::beginDocument(const QString& documentName, bool lastDocument,
     {
         if (errorMessage)
         {
-            *errorMessage = tr("A CUPS document is already open.");
+            *errorMessage = tr("Документ CUPS уже открыт.");
         }
         return false;
     }
@@ -197,7 +197,7 @@ bool CupsPrintJob::beginDocument(const QString& documentName, bool lastDocument,
     {
         if (errorMessage)
         {
-            *errorMessage = lastCupsError(tr("Sending the document to CUPS failed."));
+            *errorMessage = lastCupsError(tr("Не удалось отправить документ в CUPS."));
         }
         return false;
     }
@@ -218,7 +218,7 @@ bool CupsPrintJob::write(const QByteArray& data, QString* errorMessage)
     {
         if (errorMessage)
         {
-            *errorMessage = tr("No CUPS document is open for writing.");
+            *errorMessage = tr("Нет открытого документа CUPS для записи.");
         }
         return false;
     }
@@ -236,7 +236,7 @@ bool CupsPrintJob::write(const QByteArray& data, QString* errorMessage)
         {
             if (errorMessage)
             {
-                *errorMessage = lastCupsError(tr("Writing print data to CUPS failed."));
+                *errorMessage = lastCupsError(tr("Не удалось передать данные печати в CUPS."));
             }
             return false;
         }
@@ -258,7 +258,7 @@ bool CupsPrintJob::finishDocument(QString* errorMessage)
     {
         if (errorMessage)
         {
-            *errorMessage = tr("No CUPS document is open.");
+            *errorMessage = tr("Нет открытого документа CUPS.");
         }
         return false;
     }
@@ -270,7 +270,7 @@ bool CupsPrintJob::finishDocument(QString* errorMessage)
     {
         if (errorMessage)
         {
-            *errorMessage = finishError(status, tr("CUPS rejected the document."));
+            *errorMessage = finishError(status, tr("CUPS отклонил документ."));
         }
         return false;
     }

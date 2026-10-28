@@ -9,6 +9,7 @@
 #include <QPainter>
 #include <QScrollBar>
 #include <QStyle>
+#include <QTransform>
 #include <QWheelEvent>
 #include <QtMath>
 
@@ -20,6 +21,21 @@ constexpr qreal ScreenDpi = 96.0;
 constexpr qreal MinimumZoom = 0.10;
 constexpr qreal MaximumZoom = 4.00;
 constexpr qint64 MaximumPreviewPixels = 64'000'000;
+
+int normalizedRotation(int degrees)
+{
+    degrees %= 360;
+    if (degrees < 0)
+    {
+        degrees += 360;
+    }
+    return degrees;
+}
+
+bool swapsPageDimensions(int degrees)
+{
+    return degrees == 90 || degrees == 270;
+}
 }   // namespace
 
 // Defined at global scope so the forward declaration in pageview.h names the
@@ -143,10 +159,17 @@ void PageView::onDocumentChanged()
     m_pageIndex = 0;
     m_fitMode = FitMode::Page;
     m_zoom = 1.0;
+    m_pageRotations.clear();
 
     updateFitZoom();
     renderCurrentPage();
     Q_EMIT pageChanged(m_pageIndex);
+    Q_EMIT rotationChanged(0);
+}
+
+int PageView::rotation() const
+{
+    return m_pageRotations.value(m_pageIndex, 0);
 }
 
 void PageView::setPage(int pageIndex)
@@ -216,6 +239,63 @@ void PageView::fitPage()
     renderCurrentPage();
 }
 
+void PageView::rotateClockwise()
+{
+    setCurrentPageRotation(rotation() + 90);
+}
+
+void PageView::rotateCounterClockwise()
+{
+    setCurrentPageRotation(rotation() - 90);
+}
+
+void PageView::resetRotation()
+{
+    setCurrentPageRotation(0);
+}
+
+void PageView::setCurrentPageRotation(int degrees)
+{
+    if (!m_model || !m_model->isOpen())
+    {
+        return;
+    }
+
+    const int newRotation = normalizedRotation(degrees);
+    if (newRotation == rotation())
+    {
+        return;
+    }
+
+    // Keep the same point of the sheet under the centre of the viewport. This
+    // is especially useful at a fixed zoom, where the page dimensions change.
+    const QSize oldCanvasSize = m_canvas->size();
+    const qreal relativeCentreX = oldCanvasSize.width() > 0
+        ? (horizontalScrollBar()->value() + viewport()->width() / 2.0) / oldCanvasSize.width()
+        : 0.5;
+    const qreal relativeCentreY = oldCanvasSize.height() > 0
+        ? (verticalScrollBar()->value() + viewport()->height() / 2.0) / oldCanvasSize.height()
+        : 0.5;
+
+    if (newRotation == 0)
+    {
+        m_pageRotations.remove(m_pageIndex);
+    }
+    else
+    {
+        m_pageRotations.insert(m_pageIndex, newRotation);
+    }
+
+    renderCurrentPage();
+
+    horizontalScrollBar()->setValue(
+        qRound(relativeCentreX * m_canvas->width() - viewport()->width() / 2.0));
+    verticalScrollBar()->setValue(
+        qRound(relativeCentreY * m_canvas->height() - viewport()->height() / 2.0));
+
+    Q_EMIT rotationChanged(newRotation);
+}
+
 void PageView::refresh()
 {
     renderCurrentPage();
@@ -228,11 +308,16 @@ void PageView::updateFitZoom()
         return;
     }
 
-    const QSizeF pageSizeMM = m_model->pageSizeMm(m_pageIndex);
-    if (pageSizeMM.isEmpty())
+    const QSizeF rawPageSizeMM = m_model->pageSizeMm(m_pageIndex);
+    if (rawPageSizeMM.isEmpty())
     {
         return;
     }
+
+    const bool swapDimensions = swapsPageDimensions(rotation());
+    const QSizeF pageSizeMM = swapDimensions
+        ? QSizeF(rawPageSizeMM.height(), rawPageSizeMM.width())
+        : rawPageSizeMM;
 
     const qreal pageWidth = pageSizeMM.width() * PointsPerMillimeter * ScreenDpi;
     const qreal pageHeight = pageSizeMM.height() * PointsPerMillimeter * ScreenDpi;
@@ -314,20 +399,26 @@ void PageView::renderCurrentPage()
     const int pageCount = m_model->pageCount();
     if (pageCount <= 0)
     {
-        m_canvas->setContent(QImage(), QSize(), tr("This document has no pages."));
+        m_canvas->setContent(QImage(), QSize(), tr("В документе нет страниц."));
         m_canvas->setFixedSize(1, 1);
         return;
     }
 
     m_pageIndex = qBound(0, m_pageIndex, pageCount - 1);
 
-    const QSizeF pageSizeMM = m_model->pageSizeMm(m_pageIndex);
-    if (pageSizeMM.isEmpty())
+    const QSizeF rawPageSizeMM = m_model->pageSizeMm(m_pageIndex);
+    if (rawPageSizeMM.isEmpty())
     {
-        m_canvas->setContent(QImage(), QSize(), tr("The page has an invalid size."));
+        m_canvas->setContent(QImage(), QSize(), tr("Страница имеет недопустимый размер."));
         m_canvas->setFixedSize(1, 1);
         return;
     }
+
+    const int pageRotation = rotation();
+    const bool swapDimensions = swapsPageDimensions(pageRotation);
+    const QSizeF pageSizeMM = swapDimensions
+        ? QSizeF(rawPageSizeMM.height(), rawPageSizeMM.width())
+        : rawPageSizeMM;
 
     const qreal logicalWidth = pageSizeMM.width() * PointsPerMillimeter * ScreenDpi * m_zoom;
     const qreal logicalHeight = pageSizeMM.height() * PointsPerMillimeter * ScreenDpi * m_zoom;
@@ -337,19 +428,30 @@ void PageView::renderCurrentPage()
     const qreal devicePixelRatio = qMax<qreal>(1.0, this->devicePixelRatioF());
     qreal pixelScale = devicePixelRatio;
 
-    qint64 pixelCount = qint64(qRound(pageWidth * pixelScale)) *
-                        qint64(qRound(pageHeight * pixelScale));
+    // PDF4QT renders the page in its natural orientation. For quarter turns,
+    // request the dimensions that will become the displayed page after the
+    // image is rotated, so the final raster exactly fills the sheet.
+    const QSize unrotatedLogicalSize = swapDimensions
+        ? QSize(pageHeight, pageWidth)
+        : QSize(pageWidth, pageHeight);
+
+    qint64 pixelCount = qint64(qRound(unrotatedLogicalSize.width() * pixelScale)) *
+                        qint64(qRound(unrotatedLogicalSize.height() * pixelScale));
     if (pixelCount > MaximumPreviewPixels)
     {
         pixelScale *= qSqrt(qreal(MaximumPreviewPixels) / qreal(pixelCount));
     }
 
-    const QSize pixelSize(qMax(1, qRound(pageWidth * pixelScale)),
-                          qMax(1, qRound(pageHeight * pixelScale)));
+    const QSize pixelSize(qMax(1, qRound(unrotatedLogicalSize.width() * pixelScale)),
+                          qMax(1, qRound(unrotatedLogicalSize.height() * pixelScale)));
 
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     QStringList messages;
-    const QImage image = m_model->renderPage(m_pageIndex, pixelSize, &messages);
+    QImage image = m_model->renderPage(m_pageIndex, pixelSize, &messages);
+    if (!image.isNull() && pageRotation != 0)
+    {
+        image = image.transformed(QTransform().rotate(pageRotation), Qt::FastTransformation);
+    }
     QApplication::restoreOverrideCursor();
 
     QString errorMessage;
@@ -357,7 +459,7 @@ void PageView::renderCurrentPage()
     {
         if (messages.isEmpty())
         {
-            errorMessage = tr("The page could not be rendered.");
+            errorMessage = tr("Не удалось отрисовать страницу.");
         }
         else
         {

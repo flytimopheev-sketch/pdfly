@@ -8,6 +8,10 @@ Rebranding and repository release.
   repository to **pdfly**.
 - Added a Russian README and refreshed the English documentation with badges,
   screenshots, architecture notes, and installation instructions.
+- Fully localized the application interface into Russian, including menus,
+  toolbar, print dialog, CUPS progress, and error messages.
+- Added per-page rotation clockwise/counterclockwise with a reset action,
+  full-screen mode, and a document properties dialog.
 - Added a new gradient application icon and a compact toolbar with system
   icons and an About dialog.
 - Added real application screenshots to `docs/screenshots/`.

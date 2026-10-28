@@ -22,6 +22,7 @@ BuildRequires:  python3
 
 Requires:       qt6-qtbase >= 6.7
 Requires:       qt6-qtsvg
+Requires:       qt6-qttranslations
 Requires:       cups-libs
 
 ExclusiveArch:  x86_64
@@ -30,7 +31,8 @@ ExclusiveArch:  x86_64
 pdfly is a compact, read-only PDF viewer for Linux built with
 Qt 6 Widgets and PDF4QT. It renders one page at a time, composites static
 XFA forms and annotations, and prints through CUPS. The interface is
-deliberately small: open a document, navigate, zoom, and print.
+deliberately small and fully Russian: open a document, navigate, zoom,
+rotate a page, view document properties, use full screen, and print.
 
 Normal PDFs are sent to CUPS unchanged, preserving their original vectors
 and text. Static XFA forms and documents that need a visual fallback are
@@ -91,6 +93,8 @@ patchelf --set-rpath '$ORIGIN/../lib64/pdfly' %{buildroot}%{_bindir}/pdfly
 * Wed Oct 28 2026 flytimopheev-sketch <flytimopheev-sketch@users.noreply.github.com> - 0.2.0-1
 - Rebranded the project and application as pdfly
 - Added Russian and English documentation, screenshots, and a refreshed icon
+- Fully localized the application interface into Russian
+- Added per-page rotation, full-screen mode, and document properties
 - Improved the toolbar layout and added an About dialog
 - Kept static XFA rendering and direct/flatten CUPS printing
 

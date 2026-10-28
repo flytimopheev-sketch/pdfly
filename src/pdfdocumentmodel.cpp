@@ -82,7 +82,7 @@ bool PdfDocumentModel::load(const QString& filePath, QWidget* passwordParent, QS
     {
         if (errorMessage)
         {
-            *errorMessage = tr("The file '%1' does not exist or is not readable.").arg(filePath);
+            *errorMessage = tr("Файл «%1» не существует или недоступен для чтения.").arg(filePath);
         }
         return false;
     }
@@ -94,13 +94,21 @@ bool PdfDocumentModel::load(const QString& filePath, QWidget* passwordParent, QS
             return QString();
         }
 
-        *ok = false;
-        return QInputDialog::getText(passwordParent,
-                                     tr("Password required"),
-                                     tr("This PDF document is encrypted. Enter the password:"),
-                                     QLineEdit::Password,
-                                     QString(),
-                                     ok);
+        QInputDialog dialog(passwordParent);
+        dialog.setWindowTitle(tr("Требуется пароль"));
+        dialog.setLabelText(tr("PDF-документ зашифрован. Введите пароль:"));
+        dialog.setTextEchoMode(QLineEdit::Password);
+        dialog.setOkButtonText(tr("Открыть"));
+        dialog.setCancelButtonText(tr("Отмена"));
+
+        if (dialog.exec() != QDialog::Accepted)
+        {
+            *ok = false;
+            return QString();
+        }
+
+        *ok = true;
+        return dialog.textValue();
     };
 
     pdf::PDFDocumentReader reader(nullptr, passwordCallback, true, false);
@@ -114,8 +122,8 @@ bool PdfDocumentModel::load(const QString& filePath, QWidget* passwordParent, QS
             if (errorMessage->isEmpty())
             {
                 *errorMessage = reader.getReadingResult() == pdf::PDFDocumentReader::Result::Cancelled
-                                    ? tr("Opening the document was cancelled.")
-                                    : tr("The PDF document could not be read.");
+                                    ? tr("Открытие документа отменено.")
+                                    : tr("Не удалось прочитать PDF-документ.");
             }
         }
         return false;
@@ -125,7 +133,7 @@ bool PdfDocumentModel::load(const QString& filePath, QWidget* passwordParent, QS
     {
         if (errorMessage)
         {
-            *errorMessage = tr("The document does not contain any pages.");
+            *errorMessage = tr("Документ не содержит страниц.");
         }
         return false;
     }
@@ -156,7 +164,7 @@ bool PdfDocumentModel::installDocument(pdf::PDFDocumentPointer document, QString
     {
         if (errorMessage)
         {
-            *errorMessage = tr("Invalid PDF document.");
+            *errorMessage = tr("Некорректный PDF-документ.");
         }
         return false;
     }
@@ -329,7 +337,7 @@ QImage PdfDocumentModel::renderPage(int pageIndex, const QSize& pixelSize, QStri
     {
         if (messages)
         {
-            *messages << tr("The requested page image is too large (%1 x %2 pixels).")
+            *messages << tr("Запрошенное изображение страницы слишком велико (%1 × %2 пикселей).")
                              .arg(pixelSize.width())
                              .arg(pixelSize.height());
         }
@@ -341,7 +349,7 @@ QImage PdfDocumentModel::renderPage(int pageIndex, const QSize& pixelSize, QStri
     {
         if (messages)
         {
-            *messages << tr("Not enough memory to render the page image.");
+            *messages << tr("Недостаточно памяти для отрисовки страницы.");
         }
         return QImage();
     }
@@ -386,7 +394,7 @@ QImage PdfDocumentModel::renderPage(int pageIndex, const QSize& pixelSize, QStri
     {
         for (const pdf::PDFRenderError& error : errors)
         {
-            *messages << tr("Page %1: %2").arg(pageIndex + 1).arg(error.message);
+            *messages << tr("Страница %1: %2").arg(pageIndex + 1).arg(error.message);
         }
     }
 
@@ -412,7 +420,7 @@ QImage PdfDocumentModel::renderCompositedPage(int pageIndex, int dpi, bool forPr
     {
         if (messages)
         {
-            *messages << tr("Page %1 has an invalid page size.").arg(pageIndex + 1);
+            *messages << tr("Страница %1 имеет недопустимый размер.").arg(pageIndex + 1);
         }
         return QImage();
     }
@@ -422,7 +430,8 @@ QImage PdfDocumentModel::renderCompositedPage(int pageIndex, int dpi, bool forPr
     {
         if (messages)
         {
-            *messages << tr("Page %1 at %2 DPI requires %3 x %4 pixels, which exceeds the safe limit. Choose a lower DPI.")
+            *messages << tr("Для страницы %1 при разрешении %2 DPI требуется %3 × %4 пикселей — "
+                            "это превышает безопасный лимит. Выберите меньшее разрешение.")
                              .arg(pageIndex + 1)
                              .arg(dpi)
                              .arg(imageSize.width())
@@ -436,7 +445,7 @@ QImage PdfDocumentModel::renderCompositedPage(int pageIndex, int dpi, bool forPr
     {
         if (messages)
         {
-            *messages << tr("Not enough memory to render page %1 at %2 DPI.")
+            *messages << tr("Недостаточно памяти для отрисовки страницы %1 при разрешении %2 DPI.")
                              .arg(pageIndex + 1)
                              .arg(dpi);
         }
@@ -512,7 +521,7 @@ QImage PdfDocumentModel::renderCompositedPage(int pageIndex, int dpi, bool forPr
     {
         for (const pdf::PDFRenderError& error : errors)
         {
-            *messages << tr("Page %1: %2").arg(pageIndex + 1).arg(error.message);
+            *messages << tr("Страница %1: %2").arg(pageIndex + 1).arg(error.message);
         }
     }
 
@@ -540,7 +549,7 @@ bool PdfDocumentModel::createFlattenedPagePdf(int pageIndex, int dpi, QByteArray
     {
         if (errorMessage)
         {
-            *errorMessage = tr("Invalid page index.");
+            *errorMessage = tr("Недопустимый индекс страницы.");
         }
         return false;
     }
@@ -550,7 +559,7 @@ bool PdfDocumentModel::createFlattenedPagePdf(int pageIndex, int dpi, QByteArray
     {
         if (errorMessage)
         {
-            *errorMessage = tr("Page %1 does not exist.").arg(pageIndex + 1);
+            *errorMessage = tr("Страницы %1 не существует.").arg(pageIndex + 1);
         }
         return false;
     }
@@ -561,7 +570,7 @@ bool PdfDocumentModel::createFlattenedPagePdf(int pageIndex, int dpi, QByteArray
     {
         if (errorMessage)
         {
-            *errorMessage = tr("Page %1 could not be rendered at %2 DPI.").arg(pageIndex + 1).arg(dpi);
+            *errorMessage = tr("Не удалось отрисовать страницу %1 при разрешении %2 DPI.").arg(pageIndex + 1).arg(dpi);
         }
         return false;
     }
@@ -588,7 +597,7 @@ bool PdfDocumentModel::createFlattenedPagePdf(int pageIndex, int dpi, QByteArray
     {
         if (errorMessage)
         {
-            *errorMessage = tr("Could not create an in-memory PDF document.");
+            *errorMessage = tr("Не удалось создать PDF-документ в памяти.");
         }
         return false;
     }
@@ -611,7 +620,7 @@ bool PdfDocumentModel::createFlattenedPagePdf(int pageIndex, int dpi, QByteArray
     {
         if (errorMessage)
         {
-            *errorMessage = tr("The generated PDF document is empty.");
+            *errorMessage = tr("Созданный PDF-документ пуст.");
         }
         return false;
     }
