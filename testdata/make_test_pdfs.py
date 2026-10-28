@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create small PDFs used to smoke-test PdfQtViewer without external assets.
+"""Create small PDFs used to smoke-test pdfly without external assets.
 
 The static XFA document contains an XFA template packet only. This is the
 read-only XFA subset supported by PDF4QT: static page geometry, draw elements
@@ -70,7 +70,7 @@ BT /F1 12 Tf 72 665 Td (Vector text and graphics - direct CUPS path) Tj ET
             b"/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>"),
         4: stream(content),
         5: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-        6: b"<< /Title (Normal PDF test page) /Producer (PdfQtViewer test data) >>",
+        6: b"<< /Title (Normal PDF test page) /Producer (pdfly test data) >>",
     }
     return build_pdf(objects, root=1, info=6)
 
@@ -96,7 +96,7 @@ BT /F1 18 Tf 40 520 Td (Two-page PDF - page 2) Tj ET
         5: stream(page_one),
         6: stream(page_two),
         7: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-        8: b"<< /Title (Two-page print test) /Producer (PdfQtViewer test data) >>",
+        8: b"<< /Title (Two-page print test) /Producer (pdfly test data) >>",
     }
     return build_pdf(objects, root=1, info=8)
 
@@ -141,7 +141,7 @@ def make_static_xfa_pdf() -> bytes:
         5: b"<< /Fields [] /XFA [(template) 7 0 R] >>",
         6: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
         7: stream(template, b"/Type /EmbeddedFile /Subtype /text#2Fxml"),
-        8: b"<< /Title (Static XFA test form) /Producer (PdfQtViewer test data) >>",
+        8: b"<< /Title (Static XFA test form) /Producer (pdfly test data) >>",
     }
     return build_pdf(objects, root=1, info=8)
 

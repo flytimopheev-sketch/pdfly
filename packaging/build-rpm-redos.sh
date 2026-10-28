@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the PdfQtViewer binary RPM on RedOS 8 x86_64.
+# Build the pdfly binary RPM on RedOS 8 x86_64.
 #
 # Prerequisites:
 #   - CMake, Ninja, GCC C++, Qt 6.7+ development files, CUPS development files,
@@ -15,8 +15,8 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-NAME=pdfqtviewer
-VERSION=${VERSION:-$(sed -n 's/^project(PdfQtViewer VERSION \([^ ]*\).*/\1/p' "$ROOT/CMakeLists.txt" | head -n1)}
+NAME=pdfly
+VERSION=${VERSION:-$(sed -n 's/^project(pdfly VERSION \([^ ]*\).*/\1/p' "$ROOT/CMakeLists.txt" | head -n1)}
 PDF4QT_ROOT=${PDF4QT_ROOT:-/opt/pdf4qt}
 TOP=${RPM_TOPDIR:-"$ROOT/.rpmbuild"}
 DIST=${DIST_DIR:-"$ROOT/dist"}
@@ -54,7 +54,7 @@ else
         -czf "$TOP/SOURCES/$NAME-$VERSION.tar.gz" .
 fi
 
-rpmbuild -bb "$ROOT/packaging/rpm/pdfqtviewer.spec" \
+rpmbuild -bb "$ROOT/packaging/rpm/pdfly.spec" \
     --define "_topdir $TOP" \
     --define "_pdf4qt_root $PDF4QT_ROOT"
 

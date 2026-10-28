@@ -5,7 +5,7 @@
 // direct mode and flattened XFA pages in flatten mode, exercising the same
 // CupsPrintJob code used by the viewer.
 //
-// Usage: pdfqtviewer-print-smoke <printer-name> <testdata-directory>
+// Usage: pdfly-print-smoke <printer-name> <testdata-directory>
 //        [direct|flatten|multi|both]
 
 #include "pdfdocumentmodel.h"
@@ -40,7 +40,7 @@ int main(int argc, char** argv)
 
     if (argc < 3)
     {
-        out() << "Usage: pdfqtviewer-print-smoke <printer-name> <testdata-directory> "
+        out() << "Usage: pdfly-print-smoke <printer-name> <testdata-directory> "
                  "[direct|flatten|multi|both]"
               << Qt::endl;
         return 2;
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
         {
             PrintSettings settings;
             settings.printer = printer;
-            settings.documentTitle = QStringLiteral("PdfQtViewer direct smoke test");
+            settings.documentTitle = QStringLiteral("pdfly direct smoke test");
             settings.copies = 1;
             settings.flatten = false;
             settings.fitToPrintableArea = true;
@@ -93,7 +93,7 @@ int main(int argc, char** argv)
         {
             PrintSettings settings;
             settings.printer = printer;
-            settings.documentTitle = QStringLiteral("PdfQtViewer XFA flatten smoke test");
+            settings.documentTitle = QStringLiteral("pdfly XFA flatten smoke test");
             settings.copies = 1;
             settings.flatten = true;
             settings.fitToPrintableArea = true;
@@ -127,7 +127,7 @@ int main(int argc, char** argv)
 
             PrintSettings settings;
             settings.printer = printer;
-            settings.documentTitle = QStringLiteral("PdfQtViewer multi-page flatten smoke test");
+            settings.documentTitle = QStringLiteral("pdfly multi-page flatten smoke test");
             settings.copies = 1;
             settings.flatten = true;
             settings.fitToPrintableArea = true;

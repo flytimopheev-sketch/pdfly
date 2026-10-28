@@ -8,16 +8,16 @@
 int main(int argc, char* argv[])
 {
     QApplication application(argc, argv);
-    QApplication::setOrganizationName(QStringLiteral("PdfQtViewer"));
-    QApplication::setOrganizationDomain(QStringLiteral("pdfqtviewer.local"));
-    QApplication::setApplicationName(QStringLiteral("pdfqtviewer"));
-    QApplication::setApplicationDisplayName(QStringLiteral("PDF Qt Viewer"));
-    QApplication::setApplicationVersion(QStringLiteral("0.1.0"));
+    QApplication::setOrganizationName(QStringLiteral("pdfly"));
+    QApplication::setOrganizationDomain(QStringLiteral("pdfly.local"));
+    QApplication::setApplicationName(QStringLiteral("pdfly"));
+    QApplication::setApplicationDisplayName(QStringLiteral("pdfly"));
+    QApplication::setApplicationVersion(QStringLiteral("0.2.0"));
 
     QCommandLineParser parser;
     parser.setApplicationDescription(
-        QStringLiteral("A lightweight read-only Qt/PDF4QT PDF viewer with static XFA "
-                       "rendering and CUPS printing."));
+        QStringLiteral("pdfly — a lightweight read-only PDF viewer with static XFA "
+                       "rendering and CUPS printing, built with Qt 6 and PDF4QT."));
     parser.addHelpOption();
     parser.addVersionOption();
     parser.addPositionalArgument(QStringLiteral("file"),

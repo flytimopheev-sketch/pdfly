@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(PdfQtViewer VERSION 0.1.0 LANGUAGES CXX)
+project(pdfly VERSION 0.2.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -83,7 +83,7 @@ message(STATUS "PDF4QT library: ${PDF4QT_CORE_LIBRARY}")
 # ---------------------------------------------------------------------------
 # Application
 # ---------------------------------------------------------------------------
-add_executable(pdfqtviewer
+add_executable(pdfly
     src/main.cpp
     src/mainwindow.cpp
     src/mainwindow.h
@@ -100,11 +100,11 @@ add_executable(pdfqtviewer
     src/printsettings.h
 )
 
-target_include_directories(pdfqtviewer PRIVATE
+target_include_directories(pdfly PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/src"
     "${PDF4QT_INCLUDE_DIR}")
 
-target_link_libraries(pdfqtviewer PRIVATE
+target_link_libraries(pdfly PRIVATE
     Qt6::Core
     Qt6::Gui
     Qt6::Widgets
@@ -112,20 +112,20 @@ target_link_libraries(pdfqtviewer PRIVATE
     "${PDF4QT_CORE_LIBRARY}")
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(pdfqtviewer PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(pdfly PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 # Make the built and installed executable find a PDF4QT installed outside the
 # system library paths. LD_LIBRARY_PATH still works if PDF4QT lives elsewhere.
 get_filename_component(PDF4QT_LIBRARY_DIR "${PDF4QT_CORE_LIBRARY}" DIRECTORY)
-set_target_properties(pdfqtviewer PROPERTIES
+set_target_properties(pdfly PROPERTIES
     BUILD_RPATH "${PDF4QT_LIBRARY_DIR}"
     INSTALL_RPATH "${PDF4QT_LIBRARY_DIR};$ORIGIN/../lib")
 
-install(TARGETS pdfqtviewer RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
-install(FILES packaging/pdfqtviewer.desktop
+install(TARGETS pdfly RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+install(FILES packaging/pdfly.desktop
     DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
-install(FILES packaging/pdfqtviewer.svg
+install(FILES packaging/pdfly.svg
     DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps")
 
 # ---------------------------------------------------------------------------
@@ -134,32 +134,32 @@ install(FILES packaging/pdfqtviewer.svg
 # Generates its input with testdata/make_test_pdfs.py and validates normal
 # rendering, static XFA compositing, XFA repagination and PDF flattening.
 # ---------------------------------------------------------------------------
-option(PDFQTVIEWER_BUILD_SMOKE_TEST "Build the offscreen PdfDocumentModel smoke test" OFF)
-if(PDFQTVIEWER_BUILD_SMOKE_TEST)
-    add_executable(pdfqtviewer-smoke
+option(PDFLY_BUILD_SMOKE_TEST "Build the offscreen PdfDocumentModel smoke test" OFF)
+if(PDFLY_BUILD_SMOKE_TEST)
+    add_executable(pdfly-smoke
         testdata/smoke.cpp
         src/pdfdocumentmodel.cpp
         src/pdfdocumentmodel.h
     )
 
-    target_include_directories(pdfqtviewer-smoke PRIVATE
+    target_include_directories(pdfly-smoke PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
         "${PDF4QT_INCLUDE_DIR}")
 
-    target_link_libraries(pdfqtviewer-smoke PRIVATE
+    target_link_libraries(pdfly-smoke PRIVATE
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
         "${PDF4QT_CORE_LIBRARY}")
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        target_compile_options(pdfqtviewer-smoke PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(pdfly-smoke PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 
-    set_target_properties(pdfqtviewer-smoke PROPERTIES
+    set_target_properties(pdfly-smoke PROPERTIES
         BUILD_RPATH "${PDF4QT_LIBRARY_DIR}")
 
-    add_executable(pdfqtviewer-print-smoke
+    add_executable(pdfly-print-smoke
         testdata/print_smoke.cpp
         src/pdfdocumentmodel.cpp
         src/pdfdocumentmodel.h
@@ -170,11 +170,11 @@ if(PDFQTVIEWER_BUILD_SMOKE_TEST)
         src/printsettings.h
     )
 
-    target_include_directories(pdfqtviewer-print-smoke PRIVATE
+    target_include_directories(pdfly-print-smoke PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
         "${PDF4QT_INCLUDE_DIR}")
 
-    target_link_libraries(pdfqtviewer-print-smoke PRIVATE
+    target_link_libraries(pdfly-print-smoke PRIVATE
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
@@ -182,9 +182,9 @@ if(PDFQTVIEWER_BUILD_SMOKE_TEST)
         "${PDF4QT_CORE_LIBRARY}")
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        target_compile_options(pdfqtviewer-print-smoke PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(pdfly-print-smoke PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 
-    set_target_properties(pdfqtviewer-print-smoke PROPERTIES
+    set_target_properties(pdfly-print-smoke PROPERTIES
         BUILD_RPATH "${PDF4QT_LIBRARY_DIR}")
 endif()

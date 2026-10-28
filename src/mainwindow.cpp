@@ -22,17 +22,33 @@
 #include <QSignalBlocker>
 #include <QSpinBox>
 #include <QStatusBar>
+#include <QStyle>
 #include <QToolBar>
 #include <QUrl>
 #include <QtMath>
+
+namespace
+{
+QIcon themedIcon(const QString& name,
+                 QStyle::StandardPixmap fallback = QStyle::SP_CustomBase)
+{
+    QIcon icon = QIcon::fromTheme(name);
+    if (icon.isNull() && fallback != QStyle::SP_CustomBase)
+    {
+        icon = QApplication::style()->standardIcon(fallback);
+    }
+    return icon;
+}
+}   // namespace
 
 MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent)
 {
     setAcceptDrops(true);
-    resize(1100, 850);
-    setWindowTitle(tr("PDF Viewer"));
-    setWindowIcon(QIcon::fromTheme(QStringLiteral("application-pdf")));
+    resize(1100, 820);
+    setWindowTitle(tr("pdfly"));
+    setWindowIcon(QIcon::fromTheme(QStringLiteral("pdfly"),
+                                   QIcon::fromTheme(QStringLiteral("application-pdf"))));
 
     m_model = new PdfDocumentModel(this);
     m_pageView = new PageView(this);
@@ -44,8 +60,11 @@ MainWindow::MainWindow(QWidget* parent) :
 
     m_pageStatusLabel = new QLabel(tr("No document"), this);
     m_xfaLabel = new QLabel(tr("Static XFA (read-only)"), this);
-    m_xfaLabel->setStyleSheet(QStringLiteral("font-weight: bold;"));
+    m_xfaLabel->setStyleSheet(QStringLiteral(
+        "QLabel { background: #fff7ed; color: #9a3412; border: 1px solid #fdba74;"
+        " border-radius: 8px; padding: 1px 8px; font-weight: 600; }"));
     m_xfaLabel->setVisible(false);
+    statusBar()->setSizeGripEnabled(false);
     statusBar()->addPermanentWidget(m_xfaLabel);
     statusBar()->addPermanentWidget(m_pageStatusLabel);
 
@@ -72,43 +91,59 @@ void MainWindow::createActions()
     m_openAction = new QAction(tr("&Open..."), this);
     m_openAction->setShortcut(QKeySequence::Open);
     m_openAction->setStatusTip(tr("Open a PDF document"));
+    m_openAction->setIcon(themedIcon(QStringLiteral("document-open"),
+                                     QStyle::SP_DialogOpenButton));
     connect(m_openAction, &QAction::triggered, this, &MainWindow::chooseFile);
 
     m_printAction = new QAction(tr("&Print..."), this);
     m_printAction->setShortcut(QKeySequence::Print);
     m_printAction->setStatusTip(tr("Print the current document through CUPS"));
+    m_printAction->setIcon(themedIcon(QStringLiteral("document-print")));
     connect(m_printAction, &QAction::triggered, this, &MainWindow::printDocument);
 
     m_quitAction = new QAction(tr("&Quit"), this);
     m_quitAction->setShortcut(QKeySequence::Quit);
+    m_quitAction->setIcon(themedIcon(QStringLiteral("application-exit"),
+                                     QStyle::SP_DialogCloseButton));
     connect(m_quitAction, &QAction::triggered, qApp, &QApplication::quit);
 
     m_firstPageAction = new QAction(tr("&First Page"), this);
     m_firstPageAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+Home")));
+    m_firstPageAction->setIcon(themedIcon(QStringLiteral("go-first"),
+                                          QStyle::SP_MediaSkipBackward));
     connect(m_firstPageAction, &QAction::triggered, this, &MainWindow::goToFirstPage);
 
     m_previousPageAction = new QAction(tr("&Previous Page"), this);
     m_previousPageAction->setShortcut(QKeySequence(Qt::Key_PageUp));
+    m_previousPageAction->setIcon(themedIcon(QStringLiteral("go-previous"),
+                                             QStyle::SP_MediaSeekBackward));
     connect(m_previousPageAction, &QAction::triggered, this, &MainWindow::goToPreviousPage);
 
     m_nextPageAction = new QAction(tr("&Next Page"), this);
     m_nextPageAction->setShortcut(QKeySequence(Qt::Key_PageDown));
+    m_nextPageAction->setIcon(themedIcon(QStringLiteral("go-next"),
+                                         QStyle::SP_MediaSeekForward));
     connect(m_nextPageAction, &QAction::triggered, this, &MainWindow::goToNextPage);
 
     m_lastPageAction = new QAction(tr("&Last Page"), this);
     m_lastPageAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+End")));
+    m_lastPageAction->setIcon(themedIcon(QStringLiteral("go-last"),
+                                         QStyle::SP_MediaSkipForward));
     connect(m_lastPageAction, &QAction::triggered, this, &MainWindow::goToLastPage);
 
     m_zoomInAction = new QAction(tr("Zoom &In"), this);
     m_zoomInAction->setShortcut(QKeySequence::ZoomIn);
+    m_zoomInAction->setIcon(themedIcon(QStringLiteral("zoom-in")));
     connect(m_zoomInAction, &QAction::triggered, m_pageView, &PageView::zoomIn);
 
     m_zoomOutAction = new QAction(tr("Zoom &Out"), this);
     m_zoomOutAction->setShortcut(QKeySequence::ZoomOut);
+    m_zoomOutAction->setIcon(themedIcon(QStringLiteral("zoom-out")));
     connect(m_zoomOutAction, &QAction::triggered, m_pageView, &PageView::zoomOut);
 
     m_actualSizeAction = new QAction(tr("&Actual Size"), this);
     m_actualSizeAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+0")));
+    m_actualSizeAction->setIcon(themedIcon(QStringLiteral("zoom-original")));
     connect(m_actualSizeAction, &QAction::triggered, this, [this]
     {
         m_pageView->setZoomFactor(1.0);
@@ -116,10 +151,12 @@ void MainWindow::createActions()
 
     m_fitWidthAction = new QAction(tr("Fit &Width"), this);
     m_fitWidthAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+8")));
+    m_fitWidthAction->setIcon(themedIcon(QStringLiteral("zoom-fit-width")));
     connect(m_fitWidthAction, &QAction::triggered, m_pageView, &PageView::fitWidth);
 
     m_fitPageAction = new QAction(tr("Fit &Page"), this);
     m_fitPageAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+9")));
+    m_fitPageAction->setIcon(themedIcon(QStringLiteral("zoom-fit-best")));
     connect(m_fitPageAction, &QAction::triggered, m_pageView, &PageView::fitPage);
 }
 
@@ -145,40 +182,57 @@ void MainWindow::createMenusAndToolBar()
     viewMenu->addAction(m_fitWidthAction);
     viewMenu->addAction(m_fitPageAction);
 
+    QMenu* helpMenu = menuBar()->addMenu(tr("&Help"));
+    QAction* aboutAction = helpMenu->addAction(tr("&About pdfly"));
+    connect(aboutAction, &QAction::triggered, this, [this]
+    {
+        QMessageBox::about(
+            this, tr("About pdfly"),
+            tr("<h3>pdfly %1</h3>"
+               "<p>A lightweight read-only PDF viewer with static XFA support.</p>"
+               "<p>Built with Qt 6 and PDF4QT Core.</p>"
+               "<p>Licensed under the MIT License.</p>")
+                .arg(QApplication::applicationVersion()));
+    });
+
     QToolBar* toolBar = addToolBar(tr("Main"));
     toolBar->setMovable(false);
-    toolBar->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    toolBar->setFloatable(false);
+    toolBar->setIconSize(QSize(18, 18));
+    toolBar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    toolBar->setStyleSheet(QStringLiteral(
+        "QToolBar { spacing: 3px; padding: 3px 6px; }"));
     toolBar->addAction(m_openAction);
     toolBar->addAction(m_printAction);
     toolBar->addSeparator();
-    toolBar->addAction(m_firstPageAction);
     toolBar->addAction(m_previousPageAction);
 
-    toolBar->addWidget(new QLabel(tr(" Page "), toolBar));
+    QLabel* pageLabel = new QLabel(tr("Page"), toolBar);
+    pageLabel->setContentsMargins(8, 0, 4, 0);
+    toolBar->addWidget(pageLabel);
+
     m_pageSpinBox = new QSpinBox(toolBar);
     m_pageSpinBox->setMinimum(1);
     m_pageSpinBox->setMaximum(1);
     m_pageSpinBox->setKeyboardTracking(false);
     m_pageSpinBox->setEnabled(false);
-    m_pageSpinBox->setMaximumWidth(80);
+    m_pageSpinBox->setMaximumWidth(64);
     toolBar->addWidget(m_pageSpinBox);
 
-    m_pageCountLabel = new QLabel(tr(" of 0 "), toolBar);
+    m_pageCountLabel = new QLabel(tr("of 0"), toolBar);
+    m_pageCountLabel->setContentsMargins(4, 0, 4, 0);
     toolBar->addWidget(m_pageCountLabel);
     toolBar->addAction(m_nextPageAction);
-    toolBar->addAction(m_lastPageAction);
     toolBar->addSeparator();
     toolBar->addAction(m_zoomOutAction);
 
     m_zoomLabel = new QLabel(tr("100%"), toolBar);
-    m_zoomLabel->setMinimumWidth(48);
+    m_zoomLabel->setMinimumWidth(44);
     m_zoomLabel->setAlignment(Qt::AlignCenter);
     toolBar->addWidget(m_zoomLabel);
 
     toolBar->addAction(m_zoomInAction);
-    toolBar->addAction(m_actualSizeAction);
     toolBar->addSeparator();
-    toolBar->addAction(m_fitWidthAction);
     toolBar->addAction(m_fitPageAction);
 
     connect(m_pageSpinBox, &QSpinBox::valueChanged, this, [this](int value)
@@ -334,7 +388,7 @@ void MainWindow::updateDocumentUi()
         m_pageSpinBox->setValue(m_pageView->currentPage() + 1);
     }
 
-    m_pageCountLabel->setText(tr(" of %1 ").arg(pageCount));
+    m_pageCountLabel->setText(tr("of %1").arg(pageCount));
 
     const bool hasXfa = isOpen && m_model->hasXfaForm();
     m_xfaLabel->setVisible(hasXfa);
@@ -342,12 +396,12 @@ void MainWindow::updateDocumentUi()
     if (isOpen)
     {
         const QString fileName = QFileInfo(m_model->filePath()).fileName();
-        setWindowTitle(tr("%1%2 - PDF Viewer")
+        setWindowTitle(tr("%1%2 — pdfly")
                            .arg(fileName, hasXfa ? tr(" [XFA]") : QString()));
     }
     else
     {
-        setWindowTitle(tr("PDF Viewer"));
+        setWindowTitle(tr("pdfly"));
     }
 
     updatePageUi(m_pageView->currentPage());

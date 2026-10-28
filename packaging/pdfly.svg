@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="0.55" stop-color="#4f46e5"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#eff6ff"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#1e1b4b" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
+  <circle cx="218" cy="38" r="78" fill="#ffffff" opacity="0.08"/>
+  <circle cx="34" cy="224" r="94" fill="#ffffff" opacity="0.06"/>
+  <g filter="url(#shadow)">
+    <path d="M64 32h86l42 42v140a12 12 0 0 1-12 12H64a12 12 0 0 1-12-12V44a12 12 0 0 1 12-12z"
+          fill="url(#paper)"/>
+    <path d="M150 32l42 42h-30a12 12 0 0 1-12-12z" fill="#e11d48"/>
+  </g>
+  <text x="124" y="170" font-family="DejaVu Sans, Liberation Sans, Arial, sans-serif"
+        font-size="116" font-weight="700" fill="#1d4ed8" text-anchor="middle">p</text>
+  <circle cx="181" cy="196" r="17" fill="#e11d48"/>
+  <path d="M173 196l6 6 11-13" fill="none" stroke="#ffffff" stroke-width="5"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

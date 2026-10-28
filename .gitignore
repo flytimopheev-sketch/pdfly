@@ -9,3 +9,7 @@
 *.rpm
 *.src.rpm
 *.tar.gz
+
+# Python cache
+__pycache__/
+*.pyc

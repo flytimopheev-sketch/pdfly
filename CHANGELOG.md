@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.0 — 2026-10-28
+
+Rebranding and repository release.
+
+- Renamed the project, executable, desktop entry, icon, RPM package, and
+  repository to **pdfly**.
+- Added a Russian README and refreshed the English documentation with badges,
+  screenshots, architecture notes, and installation instructions.
+- Added a new gradient application icon and a compact toolbar with system
+  icons and an About dialog.
+- Added real application screenshots to `docs/screenshots/`.
+- Kept static XFA rendering, XFA pagination, annotation compositing, and CUPS
+  direct/flatten printing unchanged.
+
 ## 0.1.0 — 2026-10-28
 
 Initial release.

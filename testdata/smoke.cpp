@@ -5,7 +5,7 @@
 // static XFA form (including XFA page repagination), compositing the XFA layer
 // into a QImage, and creating a flattened single-page PDF from that image.
 //
-// Usage: pdfqtviewer-smoke <testdata-directory> <output-directory>
+// Usage: pdfly-smoke <testdata-directory> <output-directory>
 
 #include "pdfdocumentmodel.h"
 
@@ -87,7 +87,7 @@ int main(int argc, char** argv)
 
     if (argc < 3)
     {
-        out() << "Usage: pdfqtviewer-smoke <testdata-directory> <output-directory>" << Qt::endl;
+        out() << "Usage: pdfly-smoke <testdata-directory> <output-directory>" << Qt::endl;
         return 2;
     }
 
