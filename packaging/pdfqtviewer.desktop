@@ -1,0 +1,18 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=PdfQtViewer
+Name[ru]=Просмотрщик PDF
+GenericName=PDF Viewer
+GenericName[ru]=Просмотрщик PDF
+Comment=Read-only PDF viewer with static XFA support
+Comment[ru]=Просмотрщик PDF с поддержкой статических XFA-форм
+Exec=pdfqtviewer %f
+Icon=pdfqtviewer
+Terminal=false
+Categories=Office;Viewer;
+MimeType=application/pdf;
+Keywords=PDF;XFA;viewer;document;
+Keywords[ru]=PDF;XFA;просмотр;документ;
+StartupNotify=true
+StartupWMClass=pdfqtviewer

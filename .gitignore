@@ -1,0 +1,11 @@
+# Build output
+/build/
+/build-*/
+/dist/
+/.rpmbuild/
+/CMakeUserPresets.json
+
+# Packaging artifacts
+*.rpm
+*.src.rpm
+*.tar.gz
