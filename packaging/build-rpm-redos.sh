@@ -36,6 +36,9 @@ test -d "$PDF4QT_ROOT/include/Pdf4QtLibCore" || {
     exit 1
 }
 
+# Remove packages from previous builds; otherwise they would be copied to
+# ./dist together with the current package.
+rm -rf "$TOP/RPMS"
 mkdir -p "$TOP"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS} "$DIST"
 
 # Build the source archive from the committed tree so the RPM source and the
