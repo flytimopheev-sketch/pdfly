@@ -17,7 +17,8 @@ Filled static XFA forms and repeated table rows.
   the page set remains before the table and PDF4QT does not lay out a page
   break before any page exists.
 - Added an offscreen `bound-xfa.pdf` fixture and smoke coverage for dataset
-  binding, table pagination, element order, and rendering.
+  binding, table pagination, element order, rendering, and the flatten path
+  used for printing.
 - The source PDF is never modified; unsupported or malformed XFA falls back
   to the original document.
 

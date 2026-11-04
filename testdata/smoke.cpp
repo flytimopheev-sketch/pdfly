@@ -357,6 +357,16 @@ int main(int argc, char** argv)
             {
                 out() << "  render message: " << message << Qt::endl;
             }
+
+            // XFA printing always goes through the flatten path; make sure the
+            // bound values survive the exact PDF that is sent to CUPS.
+            QByteArray printPdf;
+            QString printError;
+            ok = check(model.createFlattenedPagePdf(0, 150, &printPdf, &printError, nullptr),
+                       QStringLiteral("bound XFA page flattens for printing: ") + printError)
+              && ok;
+            ok = check(!printPdf.isEmpty(),
+                       QStringLiteral("bound XFA print PDF is not empty")) && ok;
         }
     }
 
