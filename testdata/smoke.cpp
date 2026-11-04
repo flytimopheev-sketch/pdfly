@@ -8,6 +8,7 @@
 // Usage: pdfly-smoke <testdata-directory> <output-directory>
 
 #include "pdfdocumentmodel.h"
+#include "xfapreprocessor.h"
 
 #include <QApplication>
 #include <QDir>
@@ -220,6 +221,141 @@ int main(int argc, char** argv)
                           && ok;
                     }
                 }
+            }
+        }
+    }
+
+    // ----- Bound XFA preprocessing --------------------------------------
+    {
+        const QByteArray templateXml = R"xml(<?xml version="1.0" encoding="UTF-8"?>
+<template xmlns="http://www.xfa.org/schema/xfa-template/3.3/">
+  <subform name="form" layout="tb">
+    <pageSet>
+      <occur min="1" max="1"/>
+      <pageArea name="page1" id="page1">
+        <occur min="8" max="8"/>
+        <medium stock="custom" short="8.5in" long="11in"/>
+        <contentArea x="0.5in" y="0.5in" w="7.5in" h="1in"/>
+      </pageArea>
+    </pageSet>
+    <subform name="Rows" layout="table" x="0.5in" y="0.5in" w="4in"
+             columnWidths="2in 2in">
+      <subform name="Header" layout="row">
+        <draw name="HeaderName" w="2in" h="0.3in">
+          <font typeface="Helvetica" size="9pt"/>
+          <value><text>Name</text></value>
+        </draw>
+        <draw name="HeaderNote" w="2in" h="0.3in">
+          <font typeface="Helvetica" size="9pt"/>
+          <value><text>Note</text></value>
+        </draw>
+      </subform>
+      <subform name="Row" layout="row">
+        <bind match="dataRef" ref="$.rows[*]"/>
+        <field name="Name" w="2in" minH="0.3in">
+          <bind match="dataRef" ref="$.name"/>
+          <ui><textEdit multiLine="1"/></ui>
+          <font typeface="Helvetica" size="9pt"/>
+          <value><text></text></value>
+        </field>
+        <field name="Note" w="2in" minH="0.3in">
+          <bind match="dataRef" ref="$.note"/>
+          <ui><textEdit multiLine="1"/></ui>
+          <font typeface="Helvetica" size="9pt"/>
+          <value><text></text></value>
+        </field>
+      </subform>
+    </subform>
+  </subform>
+</template>
+)xml";
+        const QByteArray datasetsXml = R"xml(<?xml version="1.0" encoding="UTF-8"?>
+<xfa:datasets xmlns:xfa="http://www.xfa.org/schema/xfa-data/1.0/">
+  <xfa:data>
+    <data>
+      <rows><name>Bound value one</name><note>First bound row</note></rows>
+      <rows><name>Bound value two</name><note>Second bound row</note></rows>
+      <rows><name>Bound value three</name><note>Third bound row</note></rows>
+    </data>
+  </xfa:data>
+</xfa:datasets>
+)xml";
+
+        const QByteArray processed = preprocessXfaTemplate(templateXml, datasetsXml);
+        ok = check(!processed.isEmpty(), QStringLiteral("bound XFA template is preprocessed")) && ok;
+        ok = check(processed.contains("Bound value one"),
+                   QStringLiteral("bound XFA field value is injected")) && ok;
+        ok = check(processed.contains("breakBefore"),
+                   QStringLiteral("bound XFA repeated rows are paginated")) && ok;
+        const int pageSetIndex = processed.indexOf("pageSet");
+        const int tableIndex = processed.indexOf("layout=\"table\"");
+        ok = check(pageSetIndex >= 0 && tableIndex >= 0 && pageSetIndex < tableIndex,
+                   QStringLiteral("page set stays before the paginated table")) && ok;
+    }
+
+    // ----- Standard xfa:data record root --------------------------------
+    {
+        const QByteArray templateXml = R"xml(<?xml version="1.0" encoding="UTF-8"?>
+<template xmlns="http://www.xfa.org/schema/xfa-template/3.3/">
+  <subform name="form" layout="tb">
+    <field name="Name" w="4in" h="0.3in">
+      <bind match="dataRef" ref="$.name"/>
+      <value><text></text></value>
+    </field>
+  </subform>
+</template>
+)xml";
+        const QByteArray datasetsXml = R"xml(<?xml version="1.0" encoding="UTF-8"?>
+<xfa:datasets xmlns:xfa="http://www.xfa.org/schema/xfa-data/1.0/">
+  <xfa:data>
+    <record><name>Standard record root</name></record>
+  </xfa:data>
+  <dataDescription>
+    <data><name>Decoy schema value</name></data>
+  </dataDescription>
+</xfa:datasets>
+)xml";
+
+        const QByteArray processed = preprocessXfaTemplate(templateXml, datasetsXml);
+        ok = check(!processed.isEmpty(),
+                   QStringLiteral("standard xfa:data template is preprocessed")) && ok;
+        ok = check(processed.contains("Standard record root"),
+                   QStringLiteral("standard xfa:data record is bound")) && ok;
+        ok = check(!processed.contains("Decoy schema value"),
+                   QStringLiteral("dataDescription is not used as instance data")) && ok;
+    }
+
+    // ----- Bound XFA model integration ----------------------------------
+    {
+        PdfDocumentModel model;
+        QString error;
+        ok = check(model.load(testData.filePath(QStringLiteral("bound-xfa.pdf")), nullptr, &error),
+                   QStringLiteral("bound-xfa.pdf opens: ") + error)
+          && ok;
+
+        if (model.isOpen())
+        {
+            ok = check(model.hasXfaForm(), QStringLiteral("bound-xfa.pdf is detected as XFA")) && ok;
+            ok = check(model.pageCount() >= 2,
+                       QStringLiteral("bound XFA table is split across pages (%1 pages)")
+                           .arg(model.pageCount()))
+              && ok;
+
+            QStringList messages;
+            const QImage image = model.renderPage(0, imageSizeAt96Dpi(model, 0), &messages);
+            ok = check(!image.isNull(), QStringLiteral("bound XFA page renders")) && ok;
+            if (!image.isNull())
+            {
+                const qint64 ink = countNonWhitePixels(image);
+                ok = check(ink > 1000,
+                           QStringLiteral("bound XFA page contains rendered data (%1 pixels)").arg(ink))
+                  && ok;
+                ok = check(image.save(output.filePath(QStringLiteral("bound-xfa.png"))),
+                           QStringLiteral("bound-xfa.png is saved")) && ok;
+            }
+            for (const QString& message : messages)
+            {
+                out() << "  render message: " << message << Qt::endl;
             }
         }
     }

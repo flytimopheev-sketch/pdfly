@@ -2,7 +2,7 @@
   <img src="packaging/pdfly.svg" width="92" alt="pdfly icon">
   <h1>pdfly</h1>
   <p><strong>Lightweight, read-only PDF viewer for Linux</strong><br>
-  Static XFA forms, clean page rendering, and direct or flattened CUPS printing.</p>
+  Filled static XFA forms, clean page rendering, and direct or flattened CUPS printing.</p>
 
   <p>
     <a href="https://github.com/flytimopheev-sketch/pdfly/releases/latest"><img src="https://img.shields.io/github/v/release/flytimopheev-sketch/pdfly?style=flat-square&label=release" alt="Latest release"></a>
@@ -17,8 +17,8 @@
 ![pdfly main window](docs/screenshots/pdfly-main.png)
 
 A small, read-only Linux PDF viewer built with **C++20, Qt 6 Widgets and
-PDF4QT**. It displays a single PDF page at a time, composites static XFA forms
-and annotations through PDF4QT, and prints through CUPS. The application
+PDF4QT**. It displays a single PDF page at a time, composites filled static XFA
+forms and annotations through PDF4QT, and prints through CUPS. The application
 interface is fully Russian.
 
 The project deliberately uses PDF4QT Core directly instead of the heavier
@@ -28,6 +28,9 @@ printing are therefore explicit and easy to audit.
 ## Features
 
 - Open normal PDFs and static XFA forms (read-only).
+- Bind stored XFA `datasets` values into simple `dataRef` fields in memory,
+  split repeated table rows across pages, repeat their headers, and move
+  signature blocks to a fresh page. The original PDF is never modified.
 - XFA pagination is applied through `PDFFormManager::performPaging()`, so the
   page count and page sizes reported by the XFA engine are used for display and
   printing.
@@ -90,23 +93,29 @@ in PDF4QT. Therefore:
 - XFA forms must use flatten mode. The page geometry, margins, fields, and
   annotations are preserved, and `print-scaling=fit` prevents cropping, but the
   printed text/graphics are rasterized at the selected DPI.
-- Dynamic XFA, XFA scripts, calculations, and field editing are not supported.
-  Only read-only, simple/static XFA is rendered.
+- Dynamic XFA, XFA scripts, FormCalc calculations, and field editing are not
+  supported. Only read-only, static XFA is rendered.
+- Dataset binding and table pagination use a practical subset of static XFA:
+  simple `dataRef` paths, repeated rows, repeated table headers, and a
+  signature-block page break. Arbitrary XFA layout, calculations, and
+  submit/calculate rules are outside its scope.
 
 For archival output of an XFA form, print the flattened result to a PDF printer
 or use a vendor tool that can convert XFA to static PDF. This viewer does not
 modify or save the original document.
 
-PDF4QT implements a subset of static XFA. The included XFA fixture is synthetic
-and covers static page geometry, draw text, and a bordered text field; test your
-real forms before relying on the viewer for production output.
+PDF4QT implements a subset of static XFA. pdfly preprocesses the `template`
+and `datasets` packets in memory before handing them to PDF4QT. The included
+fixtures cover static page geometry, draw text, a bordered text field, and a
+filled table with repeated rows; test your real forms before relying on the
+viewer for production output.
 
 ## Requirements
 
 - Linux with CUPS (the CUPS client library is used directly).
 - GCC 11+ or Clang with C++20 support. Tested with GCC 15.2.0.
 - CMake 3.21+ and Ninja (or Make).
-- Qt 6.7+ development packages: Core, Gui, Widgets. Tested with Qt 6.10.2.
+- Qt 6.7+ development packages: Core, Gui, Widgets, Xml. Tested with Qt 6.10.2.
   PDF4QT 1.6 calls `qt_standard_project_setup(I18N_TRANSLATED_LANGUAGES ...)`,
   which was introduced in Qt 6.7.
 - CUPS 2.4+ development headers/library (`libcups2-dev` on Debian/Ubuntu).
@@ -343,14 +352,16 @@ installed in `/opt/pdf4qt` and the RedOS 8 dependencies from above:
 
 ```bash
 ./packaging/build-rpm-redos.sh
-sudo dnf install ./dist/pdfly-0.2.0-1.red80.x86_64.rpm
+sudo dnf install ./dist/pdfly-0.2.1-1.red80.x86_64.rpm
 pdfly
 ```
 
 The script creates a source archive from the current git `HEAD`, builds the
 viewer and the offscreen smoke test with `-DCMAKE_BUILD_TYPE=Release`, runs
-`%check`, and places the RPM plus `SHA256SUMS` in `dist/`. To use a different
-PDF4QT prefix:
+`%check`, and places the RPM plus `SHA256SUMS` in `dist/`. The working tree
+must be clean: the script stops when there are uncommitted or untracked files,
+so a package cannot be built from an older `HEAD` without the intended fix.
+To use a different PDF4QT prefix:
 
 ```bash
 PDF4QT_ROOT=/path/to/pdf4qt ./packaging/build-rpm-redos.sh
@@ -377,9 +388,9 @@ are shown in Russian.
 Inspect the package with:
 
 ```bash
-rpm -qpi dist/pdfly-0.2.0-1.red80.x86_64.rpm
-rpm -qpl dist/pdfly-0.2.0-1.red80.x86_64.rpm
-rpm -qpR dist/pdfly-0.2.0-1.red80.x86_64.rpm
+rpm -qpi dist/pdfly-0.2.1-1.red80.x86_64.rpm
+rpm -qpl dist/pdfly-0.2.1-1.red80.x86_64.rpm
+rpm -qpR dist/pdfly-0.2.1-1.red80.x86_64.rpm
 ```
 
 ## Smoke tests
@@ -399,10 +410,11 @@ QT_QPA_PLATFORM=offscreen ./build/pdfly-smoke build/testdata build/smoke-out
 ```
 
 `pdfly-smoke` checks normal rendering, static XFA detection and
-compositing, XFA repagination from the A4 base page to the Letter XFA page
-area, and flattening to an exact-size single-page PDF that reopens and still
-renders the XFA field. It prints `PASS` and writes `normal.png`,
-`static-xfa.png`, and `static-xfa-flattened.pdf` to `build/smoke-out`.
+compositing, dataset binding and repeated-table pagination in `bound-xfa.pdf`,
+XFA repagination from the A4 base page to the Letter XFA page area, and
+flattening to an exact-size single-page PDF that reopens and still renders the
+XFA field. It prints `PASS` and writes `normal.png`, `static-xfa.png`,
+`bound-xfa.png`, and `static-xfa-flattened.pdf` to `build/smoke-out`.
 
 The CUPS test needs a configured queue that accepts PDF. `direct` sends the
 original bytes, `flatten` sends the XFA page as a rasterized PDF, and `multi`
@@ -480,13 +492,14 @@ src/
   mainwindow.*             menus, toolbar, properties, full screen, open/print flows
   pageview.*               scrollable page display, zoom/fit, and rotation
   pdfdocumentmodel.*       PDF4QT document, caches, XFA pagination, rendering
+  xfapreprocessor.*        in-memory datasets binding and table pagination
   cupsprint.*              CUPS destination enumeration and streaming jobs
   printdialog.*            XFA-aware print options
   printrunner.*            direct and per-page flatten CUPS submission
   printsettings.h
 testdata/
-  make_test_pdfs.py        synthetic normal, two-page, and static XFA PDFs
-  smoke.cpp                offscreen rendering/XFA/flatten smoke test
+  make_test_pdfs.py        synthetic normal, two-page, static, and bound XFA PDFs
+  smoke.cpp                offscreen rendering/XFA/datasets/flatten smoke test
   print_smoke.cpp          direct/flatten/multi-document CUPS smoke test
 packaging/
   pdfly.desktop            desktop entry with PDF MIME association
@@ -510,9 +523,10 @@ third_party/               licenses of libraries statically linked by PDF4QT
 - **No printers** – check that the CUPS service is running
   (`systemctl status cups`), a printer is configured, and the user can use it
   (`lpstat -p`). The application uses the local CUPS server.
-- **XFA page looks blank** – PDF4QT supports static XFA only. Dynamic XFA and
-  XFA scripts are outside its scope. Try another static XFA document; check the
-  status bar for the XFA indicator.
+- **XFA page looks blank** - PDF4QT supports static XFA only. Stored
+  `datasets` values and repeated table rows are bound in memory, but dynamic
+  XFA, scripts, and calculations are outside its scope. Check the status bar
+  for the XFA indicator and try a simpler static form.
 - **Fields are clipped when printing directly** – use flatten mode and keep
   “Scale to printable area” enabled. The flatten path renders the full MediaBox.
 - **Huge memory use at 600 DPI** – the viewer caps a single flattened page at

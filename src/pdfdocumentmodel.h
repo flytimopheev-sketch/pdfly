@@ -25,8 +25,10 @@ class QWidget;
 
 /// Owns the PDF4QT document and the supporting caches/managers.
 ///
-/// The class is deliberately read-only: it never changes form values and only
-/// creates modified documents when PDF4QT itself repaginates a static XFA form.
+/// The class is deliberately read-only with respect to the source file.  XFA
+/// datasets are bound into an in-memory copy of the template so that filled
+/// static forms display and print their stored values; the file on disk is
+/// never modified.
 class PdfDocumentModel : public QObject
 {
     Q_OBJECT

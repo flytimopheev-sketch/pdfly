@@ -42,10 +42,16 @@ rm -rf "$TOP/RPMS"
 mkdir -p "$TOP"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS} "$DIST"
 
 # Build the source archive from the committed tree so the RPM source and the
-# GitHub tag are identical. Fall back to a plain tar for an uncommitted tree.
+# GitHub tag are identical.  A dirty tree is an error: packaging HEAD while
+# the working tree contains the actual fix silently produces an RPM with the
+# old code (this is how 0.2.1 once shipped without the XFA preprocessor).
 if git -C "$ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    if ! git -C "$ROOT" diff --quiet || ! git -C "$ROOT" diff --cached --quiet; then
-        echo "Warning: the working tree has uncommitted changes; only HEAD is packaged." >&2
+    if ! git -C "$ROOT" diff --quiet || ! git -C "$ROOT" diff --cached --quiet ||
+       [ -n "$(git -C "$ROOT" ls-files --others --exclude-standard)" ]; then
+        echo "Error: the working tree has uncommitted or untracked changes." >&2
+        echo "Commit them before building the package; only the commit is archived." >&2
+        git -C "$ROOT" status --short >&2
+        exit 1
     fi
     git -C "$ROOT" archive --format=tar.gz \
         --prefix="$NAME-$VERSION/" \

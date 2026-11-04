@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(pdfly VERSION 0.2.0 LANGUAGES CXX)
+project(pdfly VERSION 0.2.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,7 +14,7 @@ include(GNUInstallDirs)
 
 # PDF4QT 1.6 uses qt_standard_project_setup(I18N_TRANSLATED_LANGUAGES ...),
 # which requires Qt 6.7 or newer.
-find_package(Qt6 6.7 REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt6 6.7 REQUIRED COMPONENTS Core Gui Widgets Xml)
 
 # ---------------------------------------------------------------------------
 # CUPS
@@ -91,6 +91,8 @@ add_executable(pdfly
     src/pageview.h
     src/pdfdocumentmodel.cpp
     src/pdfdocumentmodel.h
+    src/xfapreprocessor.cpp
+    src/xfapreprocessor.h
     src/cupsprint.cpp
     src/cupsprint.h
     src/printdialog.cpp
@@ -108,8 +110,11 @@ target_link_libraries(pdfly PRIVATE
     Qt6::Core
     Qt6::Gui
     Qt6::Widgets
+    Qt6::Xml
     ${CUPS_LINK_TARGET}
     "${PDF4QT_CORE_LIBRARY}")
+
+target_compile_definitions(pdfly PRIVATE PDFLY_VERSION="${PROJECT_VERSION}")
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(pdfly PRIVATE -Wall -Wextra -Wpedantic)
@@ -140,6 +145,8 @@ if(PDFLY_BUILD_SMOKE_TEST)
         testdata/smoke.cpp
         src/pdfdocumentmodel.cpp
         src/pdfdocumentmodel.h
+        src/xfapreprocessor.cpp
+        src/xfapreprocessor.h
     )
 
     target_include_directories(pdfly-smoke PRIVATE
@@ -150,6 +157,7 @@ if(PDFLY_BUILD_SMOKE_TEST)
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
+        Qt6::Xml
         "${PDF4QT_CORE_LIBRARY}")
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
@@ -163,6 +171,8 @@ if(PDFLY_BUILD_SMOKE_TEST)
         testdata/print_smoke.cpp
         src/pdfdocumentmodel.cpp
         src/pdfdocumentmodel.h
+        src/xfapreprocessor.cpp
+        src/xfapreprocessor.h
         src/cupsprint.cpp
         src/cupsprint.h
         src/printrunner.cpp
@@ -178,6 +188,7 @@ if(PDFLY_BUILD_SMOKE_TEST)
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
+        Qt6::Xml
         ${CUPS_LINK_TARGET}
         "${PDF4QT_CORE_LIBRARY}")
 

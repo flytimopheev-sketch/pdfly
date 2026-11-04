@@ -146,6 +146,102 @@ def make_static_xfa_pdf() -> bytes:
     return build_pdf(objects, root=1, info=8)
 
 
+def make_bound_xfa_pdf() -> bytes:
+    template = b"""<?xml version="1.0" encoding="UTF-8"?>
+<template xmlns="http://www.xfa.org/schema/xfa-template/3.3/">
+  <subform name="form" layout="tb" locale="en_US">
+    <pageSet>
+      <occur min="1" max="1"/>
+      <pageArea name="page1" id="page1">
+        <occur min="8" max="8"/>
+        <medium stock="custom" short="8.5in" long="11in"/>
+        <contentArea x="0.5in" y="0.5in" w="7.5in" h="3in"/>
+      </pageArea>
+    </pageSet>
+    <draw name="title" x="0.5in" y="0.5in" w="6in" h="0.5in">
+      <font typeface="Helvetica" size="14pt"/>
+      <value><text>Bound XFA rows</text></value>
+    </draw>
+    <subform name="Rows" layout="table" x="0.5in" y="1.2in" w="7in"
+             columnWidths="2in 1.5in 3.5in">
+      <border>
+        <edge stroke="solid" thickness="1pt"/>
+      </border>
+      <subform name="Header" layout="row">
+        <draw name="HeaderName" w="2in" h="0.35in">
+          <font typeface="Helvetica" size="10pt"/>
+          <value><text>Name</text></value>
+          <border><edge stroke="solid" thickness="0.5pt"/></border>
+        </draw>
+        <draw name="HeaderQuantity" w="1.5in" h="0.35in">
+          <font typeface="Helvetica" size="10pt"/>
+          <value><text>Quantity</text></value>
+          <border><edge stroke="solid" thickness="0.5pt"/></border>
+        </draw>
+        <draw name="HeaderNote" w="3.5in" h="0.35in">
+          <font typeface="Helvetica" size="10pt"/>
+          <value><text>Note</text></value>
+          <border><edge stroke="solid" thickness="0.5pt"/></border>
+        </draw>
+      </subform>
+      <subform name="Row" layout="row">
+        <bind match="dataRef" ref="$.rows[*]"/>
+        <field name="Name" w="2in" minH="0.35in">
+          <bind match="dataRef" ref="$.name"/>
+          <ui><textEdit multiLine="1"/></ui>
+          <font typeface="Helvetica" size="10pt"/>
+          <value><text></text></value>
+          <border><edge stroke="solid" thickness="0.5pt"/></border>
+          <margin leftInset="2pt" rightInset="2pt" topInset="1pt" bottomInset="1pt"/>
+        </field>
+        <field name="Quantity" w="1.5in" minH="0.35in">
+          <bind match="dataRef" ref="$.quantity"/>
+          <ui><textEdit multiLine="0"/></ui>
+          <font typeface="Helvetica" size="10pt"/>
+          <value><text></text></value>
+          <border><edge stroke="solid" thickness="0.5pt"/></border>
+          <margin leftInset="2pt" rightInset="2pt" topInset="1pt" bottomInset="1pt"/>
+        </field>
+        <field name="Note" w="3.5in" minH="0.35in">
+          <bind match="dataRef" ref="$.note"/>
+          <ui><textEdit multiLine="1"/></ui>
+          <font typeface="Helvetica" size="10pt"/>
+          <value><text></text></value>
+          <border><edge stroke="solid" thickness="0.5pt"/></border>
+          <margin leftInset="2pt" rightInset="2pt" topInset="1pt" bottomInset="1pt"/>
+        </field>
+      </subform>
+    </subform>
+  </subform>
+</template>
+"""
+    rows = "".join(
+        f"<rows><name>Bound row {index}</name><quantity>{index}</quantity>"
+        f"<note>Dataset value for smoke test row {index}</note></rows>"
+        for index in range(1, 9)
+    )
+    datasets = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<xfa:datasets xmlns:xfa="http://www.xfa.org/schema/xfa-data/1.0/">'
+        f"<xfa:data><data>{rows}</data></xfa:data></xfa:datasets>"
+    ).encode()
+    content = b"0.9 0.9 0.9 rg 0 0 595 842 re f\n"
+
+    objects = {
+        1: b"<< /Type /Catalog /Pages 2 0 R /AcroForm 5 0 R >>",
+        2: b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        3: (b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
+            b"/Resources << /Font << /F1 6 0 R >> >> /Contents 4 0 R >>"),
+        4: stream(content),
+        5: (b"<< /Fields [] /XFA [(template) 7 0 R (datasets) 9 0 R] >>"),
+        6: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        7: stream(template, b"/Type /EmbeddedFile /Subtype /text#2Fxml"),
+        8: b"<< /Title (Bound XFA test form) /Producer (pdfly test data) >>",
+        9: stream(datasets, b"/Type /EmbeddedFile /Subtype /text#2Fxml"),
+    }
+    return build_pdf(objects, root=1, info=8)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("output", type=pathlib.Path)
@@ -155,12 +251,15 @@ def main() -> None:
     normal = args.output / "normal.pdf"
     two_page = args.output / "normal-2page.pdf"
     xfa = args.output / "static-xfa.pdf"
+    bound_xfa = args.output / "bound-xfa.pdf"
     normal.write_bytes(make_normal_pdf())
     two_page.write_bytes(make_normal_2page_pdf())
     xfa.write_bytes(make_static_xfa_pdf())
+    bound_xfa.write_bytes(make_bound_xfa_pdf())
     print(f"wrote {normal} ({normal.stat().st_size} bytes)")
     print(f"wrote {two_page} ({two_page.stat().st_size} bytes)")
     print(f"wrote {xfa} ({xfa.stat().st_size} bytes)")
+    print(f"wrote {bound_xfa} ({bound_xfa.stat().st_size} bytes)")
 
 
 if __name__ == "__main__":

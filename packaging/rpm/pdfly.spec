@@ -1,5 +1,5 @@
 Name:           pdfly
-Version:        0.2.0
+Version:        0.2.1
 Release:        1%{?dist}
 Summary:        Lightweight read-only PDF viewer with static XFA support
 
@@ -30,14 +30,15 @@ ExclusiveArch:  x86_64
 %description
 pdfly is a compact, read-only PDF viewer for Linux built with
 Qt 6 Widgets and PDF4QT. It renders one page at a time, composites static
-XFA forms and annotations, and prints through CUPS. The interface is
-deliberately small and fully Russian: open a document, navigate, zoom,
-rotate a page, view document properties, use full screen, and print.
+XFA forms and annotations, binds stored XFA datasets, paginates repeated
+table rows, and prints through CUPS. The interface is deliberately small and
+fully Russian: open a document, navigate, zoom, rotate a page, view document
+properties, use full screen, and print.
 
 Normal PDFs are sent to CUPS unchanged, preserving their original vectors
-and text. Static XFA forms and documents that need a visual fallback are
-rendered page by page at a selected DPI and submitted as one multi-document
-CUPS job.
+and text. Static XFA forms, including filled LiveCycle-style forms, and
+documents that need a visual fallback are rendered page by page at a selected
+DPI and submitted as one multi-document CUPS job.
 
 The package bundles the PDF4QT Core shared library in a private directory;
 it does not replace or conflict with a system-wide PDF4QT installation.
@@ -90,6 +91,12 @@ patchelf --set-rpath '$ORIGIN/../lib64/pdfly' %{buildroot}%{_bindir}/pdfly
 %license LICENSE third_party/PDF4QT-LICENSE third_party/blend2d-LICENSE.md third_party/Clipper2-LICENSE
 
 %changelog
+* Sun Nov 01 2026 flytimopheev-sketch <flytimopheev-sketch@users.noreply.github.com> - 0.2.1-1
+- Bind stored XFA datasets into static templates in memory
+- Paginate repeated table rows with repeated headers
+- Move signature blocks to a fresh page and keep field values visible
+- Added bound-XFA regression coverage to the offscreen smoke test
+
 * Wed Oct 28 2026 flytimopheev-sketch <flytimopheev-sketch@users.noreply.github.com> - 0.2.0-1
 - Rebranded the project and application as pdfly
 - Added Russian and English documentation, screenshots, and a refreshed icon

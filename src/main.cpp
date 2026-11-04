@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
     QApplication::setOrganizationDomain(QStringLiteral("pdfly.local"));
     QApplication::setApplicationName(QStringLiteral("pdfly"));
     QApplication::setApplicationDisplayName(QStringLiteral("pdfly"));
-    QApplication::setApplicationVersion(QStringLiteral("0.2.0"));
+    QApplication::setApplicationVersion(QStringLiteral(PDFLY_VERSION));
     QApplication::setDesktopFileName(QStringLiteral("pdfly"));
 
     const QLocale russianLocale(QLocale::Russian, QLocale::Russia);

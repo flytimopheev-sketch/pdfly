@@ -1,6 +1,27 @@
 # Changelog
 
-## 0.2.0 — 2026-10-28
+## 0.2.1 - 2026-11-01
+
+Filled static XFA forms and repeated table rows.
+
+- Bind stored XFA `datasets` values into simple `dataRef` fields before
+  PDF4QT renders the static template, entirely in memory.
+- Read the record root from the standard `xfa:data` packet, with a fallback
+  for older exports that use a bare `<data>` wrapper; `dataDescription` is
+  never mistaken for instance data.
+- Size table rows from their content, split repeated rows across pages, and
+  repeat the table header on every page.
+- Move signature tables to a fresh page and keep the following date block
+  from overlapping them.
+- Preserve the original element order when replacing a paginated table, so
+  the page set remains before the table and PDF4QT does not lay out a page
+  break before any page exists.
+- Added an offscreen `bound-xfa.pdf` fixture and smoke coverage for dataset
+  binding, table pagination, element order, and rendering.
+- The source PDF is never modified; unsupported or malformed XFA falls back
+  to the original document.
+
+## 0.2.0 - 2026-10-28
 
 Rebranding and repository release.
 

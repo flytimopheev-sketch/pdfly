@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 #include "pdfdocumentmodel.h"
 
+#include "xfapreprocessor.h"
+
 #include <QBuffer>
 #include <QFileInfo>
 #include <QInputDialog>
@@ -147,6 +149,13 @@ bool PdfDocumentModel::load(const QString& filePath, QWidget* passwordParent, QS
     // PDF4QT's reader returns the document by value. The shared pointer keeps
     // the document alive while the raw pointers held by the managers are valid.
     pdf::PDFDocumentPointer documentPointer(new pdf::PDFDocument(std::move(document)));
+
+    // Static XFA forms sometimes contain an unbound template plus a datasets
+    // packet.  PDF4QT reads only the template, so bind the data and add page
+    // breaks for repeated table rows before the form manager is initialized.
+    // The original document is kept when this optimization is not applicable.
+    documentPointer = preprocessXfaDocument(documentPointer);
+
     if (!installDocument(std::move(documentPointer), errorMessage))
     {
         resetDocumentInfrastructure();
