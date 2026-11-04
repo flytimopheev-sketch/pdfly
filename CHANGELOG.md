@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.1 - 2026-11-01
+## 0.2.1 — 2026-11-01
 
 Filled static XFA forms and repeated table rows.
 
@@ -22,7 +22,7 @@ Filled static XFA forms and repeated table rows.
 - The source PDF is never modified; unsupported or malformed XFA falls back
   to the original document.
 
-## 0.2.0 - 2026-10-28
+## 0.2.0 — 2026-10-28
 
 Rebranding and repository release.
 

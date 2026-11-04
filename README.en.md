@@ -83,6 +83,45 @@ printing are therefore explicit and easy to audit.
 
 Ctrl+wheel also zooms the page.
 
+## Installation
+
+Download the RPM from the [latest release](https://github.com/flytimopheev-sketch/pdfly/releases/latest)
+and install it:
+
+```bash
+sudo dnf install ./pdfly-0.2.1-1.red80.x86_64.rpm
+pdfly --version
+pdfly
+```
+
+The checksum is published in `SHA256SUMS` next to the RPM. If pdfly 0.2.1 is
+already installed from an older build, use
+`sudo dnf reinstall ./pdfly-0.2.1-1.red80.x86_64.rpm`.
+
+The package installs:
+
+```text
+/usr/bin/pdfly
+/usr/lib64/pdfly/libPdf4QtLibCore.so*
+/usr/share/applications/pdfly.desktop
+/usr/share/icons/hicolor/scalable/apps/pdfly.svg
+/usr/share/licenses/pdfly/
+/usr/share/doc/pdfly/
+```
+
+PDF4QT Core is bundled in a private directory, so a system-wide PDF4QT
+installation is not required. Qt 6, CUPS and the other libraries remain normal
+RPM dependencies. The package also requires `qt6-qttranslations` so standard Qt
+dialogs and buttons are shown in Russian.
+
+Inspect the package with:
+
+```bash
+rpm -qpi pdfly-0.2.1-1.red80.x86_64.rpm
+rpm -qpl pdfly-0.2.1-1.red80.x86_64.rpm
+rpm -qpR pdfly-0.2.1-1.red80.x86_64.rpm
+```
+
 ## Important limitation: XFA and “lossless”
 
 PDF4QT does not expose a public “flatten XFA” API. Static XFA is rendered from
@@ -531,6 +570,12 @@ third_party/               licenses of libraries statically linked by PDF4QT
   “Scale to printable area” enabled. The flatten path renders the full MediaBox.
 - **Huge memory use at 600 DPI** – the viewer caps a single flattened page at
   180 megapixels. Choose a lower DPI for large-format pages.
+
+## Contributing
+
+Issues and pull requests are welcome. Please include the OS, Qt, CUPS and
+PDF4QT versions and a minimal PDF that reproduces the problem. For XFA, state
+whether the form is static and which fields are displayed incorrectly.
 
 ## License
 
